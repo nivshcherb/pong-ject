@@ -21,6 +21,4 @@
 13. Glop
 14. /dev/input/
 
----
-
 # Functions

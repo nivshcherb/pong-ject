@@ -1,16 +1,18 @@
 # Graphics
 
----
+## Surface
 
 Create 2 classes, **Pixel** and **Surface**.
+
 Class   |   Fields
 :---    |   :---
 Pixel   |   Red, green and blue
 Surface |   2D matrix of *Pixel*s
+
 These classed do not have much required functionality, and are mostly used to encapsulate the information. Make sure you have get/set access the fields.
 You can add methods as you see fit.
 
----
+## SurfaceWindow
 
 Create **SurfaceWindow** interface.
 *SurfaceWindow* describes the functionality required from any class that want to draw our game (not necessarily using Linux termianl).
@@ -21,7 +23,7 @@ Clean   |   Remove all applied surfaces.
 Draw    |   Output the current window state.
 Make sure SurfaceWindow is as portable as possible.
 
----
+## TermSurface
 
 Create **TermSurface** class that implements *SurfaceWindow*.
 For our implementation, we will use **Termios** and **ANSI escape codes**, and our *Surface* class.
@@ -40,7 +42,7 @@ Draw    |   Print each pixel with it's color using ANSI escape code. Setting the
 
 Improve the visuals and your *Draw()* method by including 2 pixels in each character. ▀ is you friend.
 
----
+## Testing
 
 Test TermSurface and make sure everything is working correctly. Finding bugs at this point will save you time when the project becomes more complicated.
 
