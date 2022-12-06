@@ -21,6 +21,7 @@ Method  |   Description
 Apply   |   Apply a given surface at location (x, y).
 Clean   |   Remove all applied surfaces.
 Draw    |   Output the current window state.
+
 Make sure SurfaceWindow is as portable as possible.
 
 ## TermSurface
