@@ -41,8 +41,6 @@ Apply   |   Replace the pixels held by TermSurface with pixels from the given Su
 Clean   |   Set the pixels held by TermSurface to some default value.
 Draw    |   Print each pixel with it's color using ANSI escape code. Setting the background color and printing a space character should do the trick.
 
-Improve the visuals and your *Draw()* method by including 2 pixels in each character. ▀ is you friend.
-
 ## Testing
 
 Test TermSurface and make sure everything is working correctly. Finding bugs at this point will save you time when the project becomes more complicated.
@@ -52,5 +50,20 @@ In a loop, draw a surface on the entire sceen. Choose a different colored surfac
 
 Which of the 3 functions in the loop has the worst preformance? Why?
 
+## Optimization
+
+Try optimizing your *Draw()* function by
+
+1. Including 2 pixels in each character. ▀ is you friend.
+2. Only printing pixels which have not been changed since the last *Draw()* call.
+
 This type of “graphics” isn’t optimal, but it is enough for our simple game.
-Later on, we'll skip the *Draw()* function most of the time, but this does not concern TermSurface at all.
+
+## Relevant Files
+
+- [include/surface.hpp](../Pong/include/surface.hpp)
+- [interface/surface_window.hpp](../Pong/interface/surface_window.hpp)
+- [include/term_surface.hpp](../Pong/include/term_surface.hpp)
+- [src/surface.cpp](../Pong/src/surface.cpp)
+- [src/term_surface.cpp](../Pong/src/term_surface.cpp)
+- [test/surface_test.cpp](../Pong/test/surface_test.cpp)
