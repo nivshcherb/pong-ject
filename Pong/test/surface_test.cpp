@@ -55,8 +55,10 @@ int main()
             avg = delta_sum / LOOPS;
             delta_sum = duration<float>(0);
             count.first = 0;
-            cout << "delta: " << avg.count() << endl;
+            cout << "\033[0m" << "delta: " << avg.count() << endl;
         }
+
+        current_rec = !current_rec;
     }
 
     return 0;

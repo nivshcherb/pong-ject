@@ -45,6 +45,26 @@ inline string ANSI_SIZE(size_t width_, size_t height_)
             + LITERAL(;) + to_string(width_) + LITERAL(t);
 }
 
+inline const char *ANSI_FG_RGB(unsigned char red_, unsigned char green_, unsigned char blue_)
+{
+    static const char *pattern = LITERAL(_CSI()) "38;2;%d;%d;%dm";
+    static char buffer[32] = { 0 };
+
+    sprintf(buffer, pattern, red_, green_, blue_);
+
+    return buffer;
+}
+
+inline const char *ANSI_BG_RGB(unsigned char red_, unsigned char green_, unsigned char blue_)
+{
+    static const char *pattern = LITERAL(_CSI()) "48;2;%d;%d;%dm";
+    static char buffer[32] = { 0 };
+
+    sprintf(buffer, pattern, red_, green_, blue_);
+
+    return buffer;
+}
+
 /* -------------------------------------------------------------------------- *
  *  TermSurface Implementations
  * -------------------------------------------------------------------------- */
@@ -136,15 +156,13 @@ void TermSurface::Draw()
             }
 
             // Print top pixel in foreground and bottom pixel in background
-            char buffer[DRAW_SIZE]{ 0 };
-            sprintf(buffer, "\033[38;2;%d;%d;%dm\033[48;2;%d;%d;%dm▀\033[0m",
-            m_surface[y][x][Pixel::Color::Red],
-            m_surface[y][x][Pixel::Color::Grenn],
-            m_surface[y][x][Pixel::Color::Blue],
-            m_surface[y + 1][x][Pixel::Color::Red],
-            m_surface[y + 1][x][Pixel::Color::Grenn],
-            m_surface[y + 1][x][Pixel::Color::Blue]);
-            cout << buffer;
+            cout    << ANSI_FG_RGB( m_surface[y][x][Pixel::Color::Red],
+                                    m_surface[y][x][Pixel::Color::Grenn],
+                                    m_surface[y][x][Pixel::Color::Blue])
+                    << ANSI_BG_RGB( m_surface[y + 1][x][Pixel::Color::Red],
+                                    m_surface[y + 1][x][Pixel::Color::Grenn],
+                                    m_surface[y + 1][x][Pixel::Color::Blue])
+                    << "▀";
         }
 
         cout << ANSI_NEXT_LINE;
