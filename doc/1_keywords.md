@@ -1,11 +1,12 @@
 # Keywords
-1. Struct vs Class
-2. 
-4. Interface
-5. Singleton
-6. Game loop sequence
-7. Game loop delta time
-8. Try, catch
+1. Struct and Class
+2. Pixel
+3. RGB, RGBA
+4. Image
+5. Method
+6. Mutator method
+7. Interface
+8. Singleton
 9. Termios
 10. ANSI escape code
     - Terminal name
@@ -15,10 +16,14 @@
     - Move cursor
     - Foreground color
     - Background color
-    - Next line
-11. Pixel
-12. RGBA
-13. Glop
-14. /dev/input/
+11. ASCII characters
+12. Exceptions
+13. Try, catch
 
 # Functions
+1. tcgetattr
+1. tcsetattr
+
+
+
+
