@@ -20,6 +20,7 @@ using std::size_t;
 
 class Pixel
 {
+public:
     enum Color
     {
         Red = 0,
@@ -45,6 +46,9 @@ public:
     Pixel& operator=(Pixel&&) = default;
     #endif // __cplusplus > 199711L
 
+    // Allow pixel comparison for drawing optimization
+    friend bool operator==(const Pixel &lhs_, const Pixel &rhs_);
+
     // Accessors
     unsigned char& operator[](Color color_);
     unsigned char operator[](Color color_) const;
@@ -58,6 +62,7 @@ private:
 
 class Surface
 {
+public:
     using SubContainer = vector<Pixel>;
     using Container = vector<SubContainer>;
 

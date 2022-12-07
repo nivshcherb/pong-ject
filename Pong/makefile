@@ -12,10 +12,11 @@ BIN		:= $(ROOT)/bin
 CC		:= g++
 CFLAGS	:= -std=c++11 -g
 
-all:	$(BIN)/termwin.out
+all:	$(BIN)/surface_test.out
 
-$(BIN)/termwin.out:	$(TEST)/termwin_test.cpp \
-					$(SRC)/termwin.cpp
+$(BIN)/surface_test.out:	$(TEST)/surface_test.cpp \
+							$(SRC)/surface.cpp \
+							$(SRC)/term_surface.cpp
 	$(CC) $(CFLAGS) -o $@ $^ -I$(INTFACE) -I$(INCLUDE)
 
 clean:

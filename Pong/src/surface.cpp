@@ -45,6 +45,11 @@ unsigned char Pixel::operator[](Color color_) const
     return m_values[color_];
 }
 
+bool operator==(const Pixel &lhs_, const Pixel &rhs_)
+{
+    return lhs_.m_values == rhs_.m_values;
+}
+
 /* -------------------------------------------------------------------------- *
  *  Surface Implementations
  * -------------------------------------------------------------------------- */
@@ -54,7 +59,7 @@ Surface::Surface(Container pixels_) :
 {
     if (0 == pixels_.size() || 0 == pixels_.front().size())
     {
-        throw invalid_argument("Unable to create surface of dimention 0...");
+        throw invalid_argument("Unable to create surface of size 0...");
     }
 }
 
