@@ -1,6 +1,6 @@
 # Graphics
 
-![graphic](https://i.kym-cdn.com/photos/images/original/001/018/866/e44.png =250x)
+<img src="https://i.kym-cdn.com/photos/images/original/001/018/866/e44.png" alt="graphic" width="400"/>
 
 ## Surface
 
