@@ -16,9 +16,16 @@ CFLAGS	:= -std=c++11 -g
 all:	$(BIN)/surface_test.out \
 		$(BIN)/kbd_test.out
 
+clean:
+	@rm $(BIN)/*
+	@rm $(OBJ)/*
+
+# Object files
+
 $(OBJ)/%.o:	$(SRC)/%.cpp
 	$(CC) $(CFLAGS) -c $^ -I$(INTFACE) -I$(INCLUDE) -o $@
 
+# Binary files
 
 $(BIN)/surface_test.out:	$(TEST)/surface_test.cpp \
 							$(OBJ)/surface.o \
@@ -28,7 +35,3 @@ $(BIN)/surface_test.out:	$(TEST)/surface_test.cpp \
 $(BIN)/kbd_test.out:	$(TEST)/kbd_test.cpp \
 						$(OBJ)/linux_kbd_device.o
 	$(CC) $(CFLAGS) $^ -I$(INTFACE) -I$(INCLUDE) -o $@
-
-clean:
-	@rm $(BIN)/*
-	@rm $(OBJ)/*

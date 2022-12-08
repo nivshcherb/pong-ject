@@ -8,7 +8,7 @@ Create **KbdInput** Interface.
 *KbdInput* describes the functionality required to read the state of the keyboard and test keys. Again, Not linux specific.
 Method      |   Description
 :--         |   :--
-Update      |   Read the status of the keyboard.
+Update      |   Read the state of the keyboard.
 IsDown      |   Check if a given key is currently down.
 IsUp        |   Check if a given key is currently up.
 IsPressed   |   Check if a given key was just pressed.
