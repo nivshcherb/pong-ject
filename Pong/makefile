@@ -1,12 +1,13 @@
-.PHONY : all 
+.PHONY : all	clean
 
 # base directories
 ROOT	:= $(shell	dirname $(realpath	$(firstword $(MAKEFILE_LIST))))
-SRC		:= $(ROOT)/src
+BIN		:= $(ROOT)/bin
 INCLUDE	:= $(ROOT)/include
 INTFACE	:= $(ROOT)/interface
+OBJ		:= $(ROOT)/obj
+SRC		:= $(ROOT)/src
 TEST	:= $(ROOT)/test
-BIN		:= $(ROOT)/bin
 
 # compilation flags
 CC		:= g++
@@ -15,14 +16,19 @@ CFLAGS	:= -std=c++11 -g
 all:	$(BIN)/surface_test.out \
 		$(BIN)/kbd_test.out
 
+$(OBJ)/%.o:	$(SRC)/%.cpp
+	$(CC) $(CFLAGS) -c $^ -I$(INTFACE) -I$(INCLUDE) -o $@
+
+
 $(BIN)/surface_test.out:	$(TEST)/surface_test.cpp \
-							$(SRC)/surface.cpp \
-							$(SRC)/term_surface.cpp
-	$(CC) $(CFLAGS) -o $@ $^ -I$(INTFACE) -I$(INCLUDE)
+							$(OBJ)/surface.o \
+							$(OBJ)/term_surface.o
+	$(CC) $(CFLAGS) $^ -I$(INTFACE) -I$(INCLUDE) -o $@
 
 $(BIN)/kbd_test.out:	$(TEST)/kbd_test.cpp \
-						$(SRC)/linux_kbd_device.cpp
-	$(CC) $(CFLAGS) -o $@ $^ -I$(INTFACE) -I$(INCLUDE)
+						$(OBJ)/linux_kbd_device.o
+	$(CC) $(CFLAGS) $^ -I$(INTFACE) -I$(INCLUDE) -o $@
 
 clean:
-	rm *.out
+	@rm $(BIN)/*
+	@rm $(OBJ)/*
