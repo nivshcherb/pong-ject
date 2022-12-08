@@ -18,6 +18,12 @@
 #include "linux_kbd_device.hpp"
 
 /* -------------------------------------------------------------------------- *
+ *  Misc.
+ * -------------------------------------------------------------------------- */
+
+constexpr const char *GLOB_PATTERN = "/dev/input/by-id/*-kbd";
+
+/* -------------------------------------------------------------------------- *
  *  LinuxKbdDevice Implementations
  * -------------------------------------------------------------------------- */
 
@@ -28,7 +34,7 @@ LinuxKbdDevice::LinuxKbdDevice() :
 {
     // Get all "-kbd" files
     glob_t kbddev;
-    glob("/dev/input/by-id/*-kbd", 0, nullptr, &kbddev);
+    glob(GLOB_PATTERN, 0, nullptr, &kbddev);
 
     // For each keyboard
     for (size_t i = 0; i < kbddev.gl_pathc; ++i)

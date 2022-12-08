@@ -20,8 +20,6 @@ int main()
 {
     KbdInput *kbd = LinuxKbdDevice::Init();
 
-    cout << "Press ESC to exit\n";
-
     size_t pressed_count = 0;
     size_t released_count = 0;
 
@@ -34,6 +32,7 @@ int main()
         released_count += kbd->IsReleased(KEY_LEFTCTRL);
 
         cout << "\033c";
+        cout << "Press ESC to exit\n\n";
         cout << "Left Ctrl\n";
         cout << "Up:\t\t" << isup << "\n";
         cout << "Down:\t\t" << isdown << "\n";
