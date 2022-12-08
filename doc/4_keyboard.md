@@ -18,7 +18,7 @@ Make sure *KbdInput* is as portable as possible.
 Create **LInuxKbdDevice** that implements *KbdInput*.
 We will read the state of the keyboard by openning "-kbd" file found in **/dev/input/** and reading a bitarray using **ioctl**. Unfortunatly, this will require us to run as root.
 
-The name of the "-kbd" file depends on your connected device. Moreover, you might find more than one "-kbd" file. Filtering out the currect file isn't imposibble, but for now we will just open and read all of them.
+The name of the "-kbd" file depends on your connected device. Moreover, you might find more than one "-kbd" file. Filtering out the currect file isn't imposible, but for now we will just open and read all of them.
 
 Use **glop** to recieve an array of all "-kbd" files and save all the ones you are able to open. It is a good idea to add an exception if no keyboard is found.
 
