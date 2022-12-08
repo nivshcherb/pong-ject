@@ -19,10 +19,13 @@
 11. ASCII characters
 12. Exceptions
 13. Try, catch
+14. /dev/input
+15. Bitarray
 
 # Functions
 1. tcgetattr
-1. tcsetattr
+2. tcsetattr
+3. ioctl
 
 
 

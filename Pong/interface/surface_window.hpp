@@ -19,7 +19,7 @@ public:
     explicit SurfaceWindow() = default;
     virtual ~SurfaceWindow() = 0;
 
-    // Noncopyable
+    // Uncopyable
     SurfaceWindow(const SurfaceWindow&) = delete;
     SurfaceWindow& operator=(const SurfaceWindow&) = delete;
 

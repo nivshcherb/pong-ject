@@ -22,7 +22,7 @@ Apply   |   Apply a given surface at location (x, y).
 Clean   |   Remove all applied surfaces.
 Draw    |   Output the current window state.
 
-Make sure SurfaceWindow is as portable as possible.
+Make sure *SurfaceWindow* is as portable as possible.
 
 ## TermSurface
 
@@ -43,7 +43,7 @@ Draw    |   Print each pixel with it's color using ANSI escape code. Setting the
 
 ## Testing
 
-Test TermSurface and make sure everything is working correctly. Finding bugs at this point will save you time when the project becomes more complicated.
+Test *TermSurface* and make sure everything is working correctly. Finding bugs at this point will save you time when the project becomes more complicated.
 
 
 In a loop, draw a surface on the entire sceen. Choose a different colored surface each loop. Compute the average time Draw() takes. Try to zoom out in the terminal to fit a many pixels as possible.

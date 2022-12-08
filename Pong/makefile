@@ -12,11 +12,16 @@ BIN		:= $(ROOT)/bin
 CC		:= g++
 CFLAGS	:= -std=c++11 -g
 
-all:	$(BIN)/surface_test.out
+all:	$(BIN)/surface_test.out \
+		$(BIN)/kbd_test.out
 
 $(BIN)/surface_test.out:	$(TEST)/surface_test.cpp \
 							$(SRC)/surface.cpp \
 							$(SRC)/term_surface.cpp
+	$(CC) $(CFLAGS) -o $@ $^ -I$(INTFACE) -I$(INCLUDE)
+
+$(BIN)/kbd_test.out:	$(TEST)/kbd_test.cpp \
+						$(SRC)/linux_kbd_device.cpp
 	$(CC) $(CFLAGS) -o $@ $^ -I$(INTFACE) -I$(INCLUDE)
 
 clean:
