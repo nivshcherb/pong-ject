@@ -18,7 +18,7 @@ This project is writen in **C++**.
 1. [Keywords](doc/1_keywords.md)
 2. [Setup](doc/2_setup.md)
 3. [Graphics](doc/3_graphics.md)
-
+4. [Keyboard](doc/4_keyboard.md)
 
 
 
