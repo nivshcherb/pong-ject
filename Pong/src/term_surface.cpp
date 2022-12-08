@@ -181,7 +181,7 @@ size_t TermSurface::GetWidth() const
 
 size_t TermSurface::GetHeight() const
 {
-    return m_surface.GetWidth();
+    return m_surface.GetHeight();
 }
 
 TermSurface *TermSurface::Init(const string &title_, size_t width_, size_t height_)

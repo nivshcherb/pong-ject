@@ -25,7 +25,7 @@ constexpr static size_t LOOPS = 100;
 
 int main()
 {
-    SurfaceWindow *win = TermSurface::Init("Test", 50, 50);
+    SurfaceWindow *win = TermSurface::Init("Test", 50, 52);
 
     Surface rec[2]{
         Surface::Container(50, Surface::SubContainer(50, Pixel(255, 0, 0))),
@@ -55,10 +55,10 @@ int main()
             avg = delta_sum / LOOPS;
             delta_sum = duration<float>(0);
             count.first = 0;
-            cout << "\033[0m" << "delta: " << avg.count() << endl;
+            cout << "\033[0m" << "delta: " << avg.count();
         }
 
-        current_rec = !current_rec;
+        //current_rec = !current_rec;
     }
 
     return 0;
