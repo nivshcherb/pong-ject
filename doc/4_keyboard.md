@@ -1,5 +1,7 @@
 # Keyboard
 
+<img src="https://media.tenor.com/MmP6YbJNV2sAAAAC/wow-typing.gif" alt="keyboard"/>
+
 ## KbdInput
 
 Create **KbdInput** Interface.
