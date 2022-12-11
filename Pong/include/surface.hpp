@@ -68,7 +68,7 @@ public:
 
 public:
     Surface(Container pixels_);
-    Surface(size_t width_, size_t height_);
+    Surface(size_t width_, size_t height_, Pixel fill_ = Pixel());
 
     ~Surface() = default;
 

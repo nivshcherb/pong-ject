@@ -18,7 +18,7 @@ using namespace std;
 
 int main()
 {
-    KbdInput *kbd = LinuxKbdDevice::Init();
+    KbdInput *kbd = new LinuxKbdDevice();
 
     size_t pressed_count = 0;
     size_t released_count = 0;
@@ -43,6 +43,8 @@ int main()
 
         sleep_for(milliseconds(10));
     }
+
+    delete kbd;
 
     return 0;
 }

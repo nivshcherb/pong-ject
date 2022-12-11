@@ -63,8 +63,8 @@ Surface::Surface(Container pixels_) :
     }
 }
 
-Surface::Surface(size_t width_, size_t height_) :
-    Surface(Container(height_, SubContainer(width_, Pixel())))
+Surface::Surface(size_t width_, size_t height_, Pixel fill_) :
+    Surface(Container(height_, SubContainer(width_, fill_)))
 {
     // Do nothing
 }

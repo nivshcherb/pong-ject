@@ -114,20 +114,20 @@ TermSurface::~TermSurface()
     cout << ANSI_CLEAR;
 }
 
-void TermSurface::Apply(const Surface &surface_, int x_, int y_)
+void TermSurface::Apply(const Surface *surface_, int x_, int y_)
 {
     // Compute surfaces overlap
     size_t from_x = max(0, x_);
     size_t from_y = max(0, y_);
-    size_t to_x = min(GetWidth(), x_ + surface_.GetWidth());
-    size_t to_y = min(GetHeight(), y_ + surface_.GetHeight());
+    size_t to_x = min(GetWidth(), x_ + surface_->GetWidth());
+    size_t to_y = min(GetHeight(), y_ + surface_->GetHeight());
 
     // Replace pixels with overlapping pixels
     for (size_t y = from_y; y < to_y; ++y)
     {
         for (size_t x = from_x; x < to_x; ++x)
         {
-            m_surface[y][x] = surface_[y - y_][x - x_];
+            m_surface[y][x] = (*surface_)[y - y_][x - x_];
         }
     }
 }
@@ -182,11 +182,4 @@ size_t TermSurface::GetWidth() const
 size_t TermSurface::GetHeight() const
 {
     return m_surface.GetHeight();
-}
-
-TermSurface *TermSurface::Init(const string &title_, size_t width_, size_t height_)
-{
-    static TermSurface instance(title_, width_, height_);
-
-    return &instance;
 }

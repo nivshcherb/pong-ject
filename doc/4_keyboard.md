@@ -6,6 +6,7 @@
 
 Create **KbdInput** Interface.
 *KbdInput* describes the functionality required to read the state of the keyboard and test keys. Again, Not linux specific.
+
 Method      |   Description
 :--         |   :--
 Update      |   Read the state of the keyboard.

@@ -12,7 +12,7 @@
  *  Interface
  * -------------------------------------------------------------------------- */
 
-class SurfaceWindow
+class SurfaceWindow // Interface
 {
 public:
     // Interface
@@ -24,7 +24,7 @@ public:
     SurfaceWindow& operator=(const SurfaceWindow&) = delete;
 
     // Apply a given surface at location (x, y)
-    virtual void Apply(const Surface &surface_, int x, int y) = 0;
+    virtual void Apply(const Surface *surface_, int x, int y) = 0;
 
     // Remove all applied surfaces
     virtual void Clean() = 0;

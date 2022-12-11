@@ -1,30 +1,36 @@
-#ifndef __CONFIG_H__
-#define __CONFIG_H__
+#ifndef __GAME_ENGINE_HPP__
+#define __GAME_ENGINE_HPP__
 /* -------------------------------------------------------------------------- */
 
 /* -------------------------------------------------------------------------- *
  *  Libraries
  * -------------------------------------------------------------------------- */
 
-#include "linux_kbd_device.hpp"
-    // using LinuxKbdDevice
+#include "surface_window.hpp"
 
-#include "term_surface.hpp"
-    // using TermSurface
+#include "game_logic.hpp"
 
 /* -------------------------------------------------------------------------- *
- *  Information
+ *  Classes
  * -------------------------------------------------------------------------- */
 
-// Used classes
-#define GAME_CLASS              PongLogic
-#define LOCAL_KEYBOARD_CLASS    LinuxKbdDevice
-#define GRAPHIC_CLASS           TermSurface
+class GameEngine
+{
+public:
+    explicit GameEngine();
+    ~GameEngine();
 
-// Config
-#define CONFIG_WIDTH    65
-#define CONFIG_HEIGHT   48
-#define CONFIG_NAME     "Pong"
+    void Start();
+    void End();
+
+private:
+    explicit GameEngine();
+
+    // Members
+    GameLogic *game;
+    SurfaceWindow *window;
+    bool is_running;
+};
 
 /* -------------------------------------------------------------------------- */
-#endif /* __CONFIG_H__ */
+#endif /* __GAME_ENGINE_HPP__ */

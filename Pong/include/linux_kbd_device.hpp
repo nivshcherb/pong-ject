@@ -24,6 +24,7 @@ constexpr size_t STATE_SIZE = (KEY_MAX + __CHAR_BIT__ - 1) / __CHAR_BIT__;
 class LinuxKbdDevice : public KbdInput
 {
 public:
+    explicit LinuxKbdDevice();
     ~LinuxKbdDevice();
 
     // Uncopyable KbdInput
@@ -35,11 +36,7 @@ public:
     bool IsPressed(int key_) override;
     bool IsReleased(int key_) override;
 
-    // Singleton access
-    static LinuxKbdDevice *Init();
-
 private:
-    explicit LinuxKbdDevice();
     static bool Test(char *bitarr_, int index_);
 
     // Members

@@ -121,15 +121,6 @@ bool LinuxKbdDevice::Test(char *bitarr_, int key_)
     return bitarr_[index] & (1U << byte);
 }
 
-LinuxKbdDevice *LinuxKbdDevice::Init()
-{
-    static LinuxKbdDevice instance;
-
-    return &instance;
-}
-
-
-
 
 
 

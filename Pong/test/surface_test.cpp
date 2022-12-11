@@ -23,7 +23,7 @@ constexpr static size_t LOOPS = 100;
 
 int main()
 {
-    SurfaceWindow *win = TermSurface::Init("Test", 50, 52);
+    SurfaceWindow *win = new TermSurface("Test", 50, 52);
 
     Surface rec[2]{
         Surface::Container(50, Surface::SubContainer(50, Pixel(255, 0, 0))),
@@ -58,6 +58,8 @@ int main()
 
         //current_rec = !current_rec;
     }
+
+    delete win;
 
     return 0;
 }

@@ -41,4 +41,4 @@ public:
 inline KbdInput::~KbdInput() {}
 
 /* -------------------------------------------------------------------------- */
-#endif /* __SURFACE_WINDOW_INTERFACE_HPP__ */
+#endif /* __KBD_INPUT_INTERFACE_HPP__ */

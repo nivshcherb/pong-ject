@@ -25,12 +25,13 @@
 class TermSurface : public SurfaceWindow
 {
 public:
+    explicit TermSurface(const string &title_, size_t width_, size_t height_);
     ~TermSurface();
 
     // Uncopyable SurfaceWindow
 
     // Override methods
-    void Apply(const Surface &surface_, int x_, int y_) override;
+    void Apply(const Surface *surface_, int x_, int y_) override;
     void Clean() override;
     void Draw() override;
 
@@ -38,11 +39,7 @@ public:
     size_t GetWidth() const;
     size_t GetHeight() const;
 
-    // Singleton access
-    static TermSurface *Init(const string &title_, size_t width_, size_t height_);
-
 private:
-    explicit TermSurface(const string &title_, size_t width_, size_t height_);
 
     // Members
     Termios m_prev_attr;
