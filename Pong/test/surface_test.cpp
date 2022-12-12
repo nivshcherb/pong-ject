@@ -41,7 +41,7 @@ int main()
         timestamp.first = steady_clock::now();
 
         win->Clean();
-        win->Apply(rec[current_rec], 0, 0);
+        win->Apply(rec + current_rec, 0, 0);
         win->Draw();
 
         timestamp.second = steady_clock::now();

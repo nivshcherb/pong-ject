@@ -21,11 +21,8 @@ public:
     ~GameEngine();
 
     void Start();
-    void End();
 
 private:
-    explicit GameEngine();
-
     // Members
     GameLogic *game;
     SurfaceWindow *window;

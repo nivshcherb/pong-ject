@@ -36,6 +36,9 @@ public:
 
     // Release all allocated resources
     virtual void Deinitialize() = 0;
+
+    // Return true if the engine should keep running the game
+    virtual bool IsRunning() = 0;
 };
 
 inline GameLogic::~GameLogic() {}

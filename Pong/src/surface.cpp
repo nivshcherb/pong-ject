@@ -11,8 +11,6 @@
  *  Misc.
  * -------------------------------------------------------------------------- */
 
-#define MaxByte ( ~(unsigned char)0 )
-
 /* -------------------------------------------------------------------------- *
  *  Pixel Implementations
  * -------------------------------------------------------------------------- */
@@ -30,7 +28,7 @@ Pixel::Pixel(Container values_) noexcept :
 }
 
 Pixel::Pixel() noexcept :
-    Pixel(MaxByte, MaxByte, MaxByte)
+    Pixel(0, 0, 0)
 {
     // Do nothing
 }

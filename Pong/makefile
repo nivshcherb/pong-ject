@@ -14,7 +14,8 @@ CC		:= g++
 CFLAGS	:= -std=c++11 -g
 
 all:	$(BIN)/surface_test.out \
-		$(BIN)/kbd_test.out
+		$(BIN)/kbd_test.out \
+		$(BIN)/main.out
 
 clean:
 	@rm $(BIN)/*
@@ -34,4 +35,11 @@ $(BIN)/surface_test.out:	$(TEST)/surface_test.cpp \
 
 $(BIN)/kbd_test.out:	$(TEST)/kbd_test.cpp \
 						$(OBJ)/linux_kbd_device.o
+	$(CC) $(CFLAGS) $^ -I$(INTFACE) -I$(INCLUDE) -o $@
+
+$(BIN)/main.out:		$(OBJ)/pong.o \
+						$(OBJ)/game_engine.o \
+						$(OBJ)/linux_kbd_device.o \
+						$(OBJ)/surface.o \
+						$(OBJ)/term_surface.o
 	$(CC) $(CFLAGS) $^ -I$(INTFACE) -I$(INCLUDE) -o $@

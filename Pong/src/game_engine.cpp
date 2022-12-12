@@ -27,26 +27,39 @@ void GameEngine::Start()
 {
     // Initialize
     window = new GRAPHIC_CLASS(CONFIG_NAME, CONFIG_WIDTH, CONFIG_HEIGHT);
-    // game = new GAME_CLASS;
+    game = new GAME_CLASS;
     game->Initialize();
 
-    is_running = true;
-    while (is_running)
+    while (game->IsRunning())
     {
         game->HandleInput();
 
         game->Update();
 
-        game->Draw();
+        game->Draw(window);
     }
 
     // Deinitialize
     game->Deinitialize();
-    //delete game; game = nullptr;
+    delete game; game = nullptr;
     delete window; window = nullptr;
 }
 
-void GameEngine::End()
+/* -------------------------------------------------------------------------- *
+ *  Main function
+ * -------------------------------------------------------------------------- */
+
+int main()
 {
-    is_running = false;
+    try
+    {
+        GameEngine engine;
+        engine.Start();
+    }
+    catch(const std::exception& e)
+    {
+        std::cerr << e.what() << '\n';
+    }
+    
+    return 0;
 }

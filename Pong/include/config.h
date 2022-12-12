@@ -6,6 +6,9 @@
  *  Libraries
  * -------------------------------------------------------------------------- */
 
+#include "pong.hpp"
+    // using Pong
+
 #include "linux_kbd_device.hpp"
     // using LinuxKbdDevice
 
@@ -17,7 +20,7 @@
  * -------------------------------------------------------------------------- */
 
 // Used classes
-#define GAME_CLASS              PongLogic
+#define GAME_CLASS              Pong
 #define LOCAL_KEYBOARD_CLASS    LinuxKbdDevice
 #define GRAPHIC_CLASS           TermSurface
 
@@ -25,6 +28,22 @@
 #define CONFIG_WIDTH    65
 #define CONFIG_HEIGHT   48
 #define CONFIG_NAME     "Pong"
+
+// Gameplay attributes
+#define PLAYER_SPEED        20.0f
+#define PLAYER_LENGTH       5
+#define BALL_INIT_VELOCITY  10.0f
+#define BALL_ACCELERATION   1.0f
+#define WIN_SCORE           1
+
+// Local input control
+#define PLAYER_1_UP         KEY_UP
+#define PLAYER_1_DOWN       KEY_DOWN
+#define PLAYER_2_UP         KEY_Q
+#define PLAYER_2_DOWN       KEY_A
+#define PAUSE_KEY           KEY_P
+#define EXIT_KEY            KEY_ESC
+#define RESTART_KEY         KEY_R
 
 /* -------------------------------------------------------------------------- */
 #endif /* __CONFIG_H__ */

@@ -28,10 +28,12 @@
 #define _CSI()  _ESC()_([)
 #define _OSC()  _ESC()_(])
 
+#define ANSI_CLR_COLOR  LITERAL(_CSI()_(m))
 #define ANSI_CURSUR_OFF LITERAL(_CSI()_(?25l))
 #define ANSI_CURSUR_ON  LITERAL(_CSI()_(?25h))
 #define ANSI_CLEAR      LITERAL(_ESC()_(c))
-#define ANSI_NEXT_LINE  LITERAL(_CSI()_(1E))
+#define ANSI_NEXT_COL   LITERAL(_CSI()_(C))
+#define ANSI_NEXT_LINE  LITERAL(_CSI()_(E))
 #define ANSI_TO_START   LITERAL(_CSI()_(H))
 
 inline string ANSI_TITLE(const string title_)
@@ -72,7 +74,7 @@ inline const char *ANSI_BG_RGB(unsigned char red_, unsigned char green_, unsigne
 TermSurface::TermSurface(const string &title_, size_t width_, size_t height_) :
     m_prev_attr{ 0 },
     m_surface(width_, height_),
-    m_prev_surface(m_surface)
+    m_prev_surface(width_, height_, Pixel(255, 255, 255))
 {
     if (0 == width_ || 0 == height_)
     {
@@ -102,6 +104,8 @@ TermSurface::TermSurface(const string &title_, size_t width_, size_t height_) :
     cout << ANSI_CURSUR_OFF;
     cout << ANSI_SIZE(GetWidth(), GetHeight() / 2);
     cout << ANSI_CLEAR;
+
+    Draw();
 }
 
 TermSurface::~TermSurface()
@@ -117,15 +121,15 @@ TermSurface::~TermSurface()
 void TermSurface::Apply(const Surface *surface_, int x_, int y_)
 {
     // Compute surfaces overlap
-    size_t from_x = max(0, x_);
-    size_t from_y = max(0, y_);
-    size_t to_x = min(GetWidth(), x_ + surface_->GetWidth());
-    size_t to_y = min(GetHeight(), y_ + surface_->GetHeight());
+    int from_x = max(0, x_);
+    int from_y = max(0, y_);
+    int to_x = min((int)GetWidth(), x_ + (int)surface_->GetWidth());
+    int to_y = min((int)GetHeight(), y_ + (int)surface_->GetHeight());
 
     // Replace pixels with overlapping pixels
-    for (size_t y = from_y; y < to_y; ++y)
+    for (int y = from_y; y < to_y; ++y)
     {
-        for (size_t x = from_x; x < to_x; ++x)
+        for (int x = from_x; x < to_x; ++x)
         {
             m_surface[y][x] = (*surface_)[y - y_][x - x_];
         }
@@ -152,6 +156,7 @@ void TermSurface::Draw()
             if (m_surface[y][x] == m_prev_surface[y][x] &&
                 m_surface[y + 1][x] == m_prev_surface[y + 1][x])
             {
+                cout << ANSI_NEXT_COL;
                 continue;
             }
 
