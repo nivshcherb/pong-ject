@@ -58,7 +58,8 @@ public:
     {
         Run,
         Pause,
-        End
+        End,
+        Closing
     };
 
 public:
@@ -77,6 +78,7 @@ public:
 private:
     void RespawnBall();
     void UpdateDelta();
+    bool AnyDevice(bool (KbdInput::* test_)(int), int key_);
 
     // Graphic loading
     static Surface s_player_surface;
@@ -93,7 +95,6 @@ private:
     pair<time_point<steady_clock>, time_point<steady_clock>> m_timestamp;
 
     GameState m_state;
-    bool is_alive;
 };
 
 /* -------------------------------------------------------------------------- */

@@ -10,10 +10,6 @@
 #include <cmath>
     using std::sqrt;
 
-#include <iostream>
-    using std::cout;
-    using std::endl;
-
 #include <cstdlib>
     using std::rand;
 
@@ -69,33 +65,31 @@ void Pong::HandleInput()
 
     m_player[0].device->Update();
 
-    if ((m_player[0].device->IsDown(EXIT_KEY)) ||
-        (m_player[1].device->IsDown(EXIT_KEY)))
+    if (AnyDevice(&KbdInput::IsPressed, EXIT_KEY))
     {
-        m_state = GameState::End;
-        is_alive = false;
+        m_state = GameState::Closing;
         return;
     }
 
-    if ((m_player[0].device->IsPressed(RESTART_KEY)) ||
-        (m_player[1].device->IsPressed(RESTART_KEY)))
+    if (AnyDevice(&KbdInput::IsPressed, RESTART_KEY))
     {
         Deinitialize();
         Initialize();
         return;
     }
 
-    if ((m_player[0].device->IsPressed(PAUSE_KEY)) ||
-        (m_player[1].device->IsPressed(PAUSE_KEY)))
+    if (AnyDevice(&KbdInput::IsPressed, PAUSE_KEY))
     {
-        if (GameState::Run == m_state)
+        // use state machine to handle pause
+        static GameState state_maping[] =
         {
-            m_state = GameState::Pause;
-        }
-        if else (GameState::Pause == m_state)
-        {
-            m_state = GameState::Run;
-        }
+            /* Run      => */   GameState::Pause,
+            /* Pause    => */   GameState::Run,
+            /* End      => */   GameState::End,
+            /* Closing  => */   GameState::Closing
+        };
+
+        m_state = state_maping[m_state];
     }
 
     // For a running game, accept input
@@ -103,19 +97,18 @@ void Pong::HandleInput()
 
     for (size_t i = 0; i < 2; ++i)
     {
-        if (m_player[i].device->IsDown(m_player[i].up_key))
-        {
-            m_player[i].y -= m_delta * PLAYER_SPEED;
-        }
-        if (m_player[i].device->IsDown(m_player[i].down_key))
-        {
-            m_player[i].y += m_delta * PLAYER_SPEED;
-        }
+        // Get movement direction
+        int direction =
+            (m_player[i].device->IsDown(m_player[i].down_key)) -    // pos sign
+            (m_player[i].device->IsDown(m_player[i].up_key));       // neg sign
+
+        m_player[i].y += direction * m_delta * PLAYER_SPEED;
     }
 }
 
 void Pong::Update()
 {
+    // Do not update if game is not running
     if (GameState::Run != m_state) return;
 
     m_ball.x += m_ball.direction_x * m_ball.velocity * m_delta;
@@ -125,17 +118,19 @@ void Pong::Update()
     // Snap players to boundaries
     for (size_t i = 0; i < 2; ++i)
     {
-        m_player[i].y = max(0.0f, min(m_player[i].y, float(CONFIG_HEIGHT - PLAYER_LENGTH)));
+        m_player[i].y = max(0.0f,
+                            min(m_player[i].y,
+                                float(CONFIG_HEIGHT - PLAYER_LENGTH)));
     }
 
     // Bounce of upper and lower boundaries
-    if (m_ball.y < 0)
+
+    int new_direction = (m_ball.y < 0) -                    // downwards
+                        (m_ball.y > CONFIG_HEIGHT);  // upwards
+
+    if (0 != new_direction)
     {
-        m_ball.direction_y = abs(m_ball.direction_y);
-    }
-    else if (m_ball.y > float(CONFIG_HEIGHT))
-    {
-        m_ball.direction_y = -1 * abs(m_ball.direction_y);
+        m_ball.direction_y = new_direction * abs(m_ball.direction_y);
     }
 
     // Bounce of players
@@ -158,12 +153,11 @@ void Pong::Update()
         ++m_player[0].score;
         RespawnBall();
     }
-    else if (m_ball.x > float(CONFIG_WIDTH))
+    else if (m_ball.x > CONFIG_WIDTH)
     {
         ++m_player[1].score;
         RespawnBall();
     }
-
 
     // Test end of game condition
     if ((WIN_SCORE == m_player[0].score) ||
@@ -180,8 +174,10 @@ void Pong::Draw(SurfaceWindow *window_)
     // Players score
     for (size_t i = 0; i < 2; ++i)
     {
-        window_->Apply(&s_number_surface[m_player[i].score % 10], s_score_x[i].second, 1);
-        window_->Apply(&s_number_surface[m_player[i].score / 10], s_score_x[i].first, 1);
+        window_->Apply(&s_number_surface[m_player[i].score % 10],
+                        s_score_x[i].second, 1);
+        window_->Apply(&s_number_surface[m_player[i].score / 10],
+                        s_score_x[i].first, 1);
     }
 
     // Vertical bar
@@ -206,7 +202,7 @@ void Pong::Deinitialize()
 
 bool Pong::IsRunning()
 {
-    return is_alive;
+    return (GameState::Closing != m_state);
 }
 
 void Pong::RespawnBall()
@@ -224,6 +220,15 @@ void Pong::UpdateDelta()
     m_timestamp.second = m_timestamp.first;
     m_timestamp.first = steady_clock::now();
     m_delta = duration<float>(m_timestamp.first - m_timestamp.second).count();
+}
+
+bool Pong::AnyDevice(bool (KbdInput::* test_)(int), int key_)
+{
+    for (Player &player : m_player)
+    {
+        if ((player.device->*test_)(key_)) return true;
+    }
+    return false;
 }
 
 /* -------------------------------------------------------------------------- *
