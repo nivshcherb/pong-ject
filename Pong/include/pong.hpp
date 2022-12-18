@@ -20,6 +20,8 @@ using std::pair;
 
 #include "kbd_input.hpp"
 
+#include "endpoint.hpp"
+
 /* -------------------------------------------------------------------------- *
  *  Info structure
  * -------------------------------------------------------------------------- */
@@ -47,6 +49,15 @@ struct Player
     KbdInput *device;
 };
 
+struct Message
+{
+    float ball_x;
+    float ball_y;
+    float player_y;
+    size_t player1_score;
+    size_t player2_score;
+};
+
 /* -------------------------------------------------------------------------- *
  *  Class
  * -------------------------------------------------------------------------- */
@@ -54,12 +65,21 @@ struct Player
 class Pong : public GameLogic
 {
 public:
+    enum GameType
+    {
+        Local,
+        Server,
+        Client
+    };
+
     enum GameState
     {
+        ChooseType,
+        Connect,
         Run,
         Pause,
         End,
-        Closing
+        Close
     };
 
 public:
@@ -80,6 +100,8 @@ private:
     void UpdateDelta();
     bool AnyDevice(bool (KbdInput::* test_)(int), int key_);
 
+    void InitializePlayers();
+
     // Graphic loading
     static Surface s_player_surface;
     static Surface s_ball_surface;
@@ -90,11 +112,12 @@ private:
     // Player info
     array<Player, 2> m_player;
     Ball m_ball;
-
     float m_delta;
     pair<time_point<steady_clock>, time_point<steady_clock>> m_timestamp;
-
     GameState m_state;
+    GameType m_type;
+    KbdInput *m_local_kbd;
+    EndPoint<Message, Message> *m_tcp;
 };
 
 /* -------------------------------------------------------------------------- */

@@ -55,6 +55,8 @@ void RunClient()
 {
     TcpClient<int, int> client(ADDRESS, PORT);
 
+    this_thread::sleep_for(milliseconds(250));
+
     cout << "client setup" << endl;
 
     while (ConnectionState::Connecting == client.GetState())

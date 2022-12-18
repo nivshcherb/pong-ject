@@ -15,6 +15,8 @@
 
 #include "pong.hpp"
 
+#include "tcp.hpp"
+
 #include "config.h"
 
 /* -------------------------------------------------------------------------- *
@@ -41,33 +43,52 @@ Pong::~Pong() {}
 
 void Pong::Initialize()
 {
-    m_state = GameState::Run;
+    m_state = GameState::ChooseType;
 
     RespawnBall();
     m_player = array<Player, 2>();
 
-    // Reset player
-    m_player[0] = { float(CONFIG_HEIGHT - PLAYER_LENGTH) / 2, 0, 0, 0, nullptr };
-    m_player[1] = { float(CONFIG_HEIGHT - PLAYER_LENGTH) / 2, 0, 0, 0, nullptr };
-
-    // Init controller device
-    m_player[0].device = new LinuxKbdDevice;
-    m_player[1].device = m_player[0].device;
-    m_player[0].up_key = PLAYER_1_UP;
-    m_player[0].down_key = PLAYER_1_DOWN;
-    m_player[1].up_key = PLAYER_2_UP;
-    m_player[1].down_key = PLAYER_2_DOWN;
+    // Create local keyboard
+    m_local_kbd = new LinuxKbdDevice;
 }
 
 void Pong::HandleInput()
 {
     UpdateDelta();
 
+    switch (m_state)    // State machine
+    {
+        case GameState::ChooseType:
+            if (m_local_kbd->IsPressed(KEY_L))
+            {
+                m_type = GameType::Local;
+            }
+
+
+
+            break;
+
+        case GameState::Connect:
+            break;
+
+        case GameState::Run:
+            break;
+
+        case GameState::Pause:
+            break;
+
+        case GameState::End:
+            break;
+
+        case GameState::Close:
+            break;
+    }
+
     m_player[0].device->Update();
 
     if (AnyDevice(&KbdInput::IsPressed, EXIT_KEY))
     {
-        m_state = GameState::Closing;
+        m_state = GameState::Close;
         return;
     }
 
@@ -86,7 +107,7 @@ void Pong::HandleInput()
             /* Run      => */   GameState::Pause,
             /* Pause    => */   GameState::Run,
             /* End      => */   GameState::End,
-            /* Closing  => */   GameState::Closing
+            /* Closing  => */   GameState::Close
         };
 
         m_state = state_maping[m_state];
@@ -202,7 +223,7 @@ void Pong::Deinitialize()
 
 bool Pong::IsRunning()
 {
-    return (GameState::Closing != m_state);
+    return (GameState::Close != m_state);
 }
 
 void Pong::RespawnBall()
@@ -229,6 +250,31 @@ bool Pong::AnyDevice(bool (KbdInput::* test_)(int), int key_)
         if ((player.device->*test_)(key_)) return true;
     }
     return false;
+}
+
+void Pong::InitializePlayers()
+{
+    // Default as local players
+    m_player[0] = { float(CONFIG_HEIGHT - PLAYER_LENGTH) / 2,
+                    0, PLAYER_1_UP,  PLAYER_1_DOWN, m_local_kbd };
+    m_player[1] = { float(CONFIG_HEIGHT - PLAYER_LENGTH) / 2,
+                    0, PLAYER_2_UP, PLAYER_2_DOWN, m_local_kbd };
+
+    switch (m_type)
+    {
+        case GameType::Local:
+            break;
+        
+        case GameType::Client:
+            m_player[0].device = nullptr;   // Disable input
+            m_tcp = new TcpClient<Message, Message>(IP_ADDRESS, PORT);
+            break;
+
+        case GameType::Server:
+            m_player[1].device = nullptr;   // Disable input
+            m_tcp = new TcpServer<Message, Message>(PORT);
+            break;
+    }
 }
 
 /* -------------------------------------------------------------------------- *

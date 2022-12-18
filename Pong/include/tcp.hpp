@@ -56,9 +56,6 @@ public:
     explicit Tcp(const string &addr_, int port_);
     virtual ~Tcp() = 0;
 
-    virtual void Connect() = 0;
-    virtual void Disconnect() = 0;
-
     void Send(const SendMsg &msg_) override;
     bool Receive(ReceiveMsg &msg_) override;
 
@@ -122,6 +119,12 @@ Tcp<SendMsg, ReceiveMsg>::Tcp(const string &addr_, int port_) :
         THROW_ERROR;
     }
 
+    int sock_flags = fcntl(m_socket, F_GETFL);
+    if (0 > fcntl(m_socket, F_SETFL, sock_flags | O_NONBLOCK))
+    {
+        THROW_ERROR;
+    }
+
     m_addr.sin_family = AF_INET;
     m_addr.sin_port = htons(port_);
     m_addr.sin_addr.s_addr = inet_addr(addr_.c_str());
@@ -146,7 +149,7 @@ bool Tcp<SendMsg, ReceiveMsg>::Receive(ReceiveMsg &msg_)
 
     if (0 == msg_size)
     {
-        Disconnect();
+        this->Disconnect();
     }
     
     return (msg_size > 0);
@@ -185,7 +188,7 @@ TcpServer<SendMsg, ReceiveMsg>::TcpServer(int port_) :
 template<typename SendMsg, typename ReceiveMsg>
 TcpServer<SendMsg, ReceiveMsg>::~TcpServer()
 {
-    Disconnect();
+    this->Disconnect();
 }
 
 template<typename SendMsg, typename ReceiveMsg>
@@ -220,7 +223,7 @@ TcpClient<SendMsg, ReceiveMsg>::TcpClient(const string &addr_, int port_) :
 template<typename SendMsg, typename ReceiveMsg>
 TcpClient<SendMsg, ReceiveMsg>::~TcpClient()
 {
-    // Do nothing
+    this->Disconnect();
 }
 
 template<typename SendMsg, typename ReceiveMsg>

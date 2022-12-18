@@ -29,6 +29,9 @@
 #define CONFIG_HEIGHT   48
 #define CONFIG_NAME     "Pong"
 
+#define IP_ADDRESS      "127.0.0.1"
+#define PORT            5000
+
 // Gameplay attributes
 #define PLAYER_SPEED        20.0f
 #define PLAYER_LENGTH       5

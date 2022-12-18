@@ -24,7 +24,7 @@ enum ConnectionState
 };
 
 /* -------------------------------------------------------------------------- *
- *  Interface
+ *  EndPoint Interface
  * -------------------------------------------------------------------------- */
 
 template<typename SendMsg, typename ReceiveMsg>
@@ -44,10 +44,8 @@ public:
     // Disconnect current endpoint
     virtual void Disconnect() = 0;
 
-    // Send message to other endpoint
     virtual void Send(const SendMsg &msg_) = 0;
 
-    // Receive message from other endpoint
     virtual bool Receive(ReceiveMsg &msg_) = 0;
 
     // Return the current state of the endpoint
