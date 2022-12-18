@@ -12,9 +12,11 @@ TEST	:= $(ROOT)/test
 # compilation flags
 CC		:= g++
 CFLAGS	:= -std=c++11 -g
+LDLIB	:= -lpthread
 
 all:	$(BIN)/surface_test.out \
 		$(BIN)/kbd_test.out \
+		$(BIN)/tcp_test.out \
 		$(BIN)/main.out
 
 clean:
@@ -36,6 +38,9 @@ $(BIN)/surface_test.out:	$(TEST)/surface_test.cpp \
 $(BIN)/kbd_test.out:	$(TEST)/kbd_test.cpp \
 						$(OBJ)/linux_kbd_device.o
 	$(CC) $(CFLAGS) $^ -I$(INTFACE) -I$(INCLUDE) -o $@
+
+$(BIN)/tcp_test.out:	$(TEST)/tcp_test.cpp
+	$(CC) $(CFLAGS) $^ -I$(INTFACE) -I$(INCLUDE) $(LDLIB) -o $@
 
 $(BIN)/main.out:		$(OBJ)/pong.o \
 						$(OBJ)/game_engine.o \

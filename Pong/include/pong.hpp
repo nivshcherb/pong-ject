@@ -66,7 +66,7 @@ public:
     explicit Pong();
     ~Pong();
 
-    //Uncopyable GameLogic
+    // Uncopyable GameLogic
 
     void Initialize() override;
     void HandleInput() override;
