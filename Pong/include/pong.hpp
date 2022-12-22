@@ -22,6 +22,8 @@ using std::pair;
 
 #include "endpoint.hpp"
 
+
+
 /* -------------------------------------------------------------------------- *
  *  Info structure
  * -------------------------------------------------------------------------- */
@@ -49,6 +51,16 @@ struct Player
     KbdInput *device;
 };
 
+enum MessageControl
+{
+    None,
+    ToPause,
+    ToContinue,
+    ToEnd,
+    ToRestart,
+    ToQuit
+};
+
 struct Message
 {
     float ball_x;
@@ -56,6 +68,7 @@ struct Message
     float player_y;
     size_t player1_score;
     size_t player2_score;
+    MessageControl command;
 };
 
 /* -------------------------------------------------------------------------- *
@@ -99,8 +112,9 @@ private:
     void RespawnBall();
     void UpdateDelta();
     bool AnyDevice(bool (KbdInput::* test_)(int), int key_);
-
     void InitializePlayers();
+    void Restart();
+    void HandleCommand(MessageControl command_);
 
     // Graphic loading
     static Surface s_player_surface;
@@ -108,6 +122,7 @@ private:
     static Surface s_vertical_line_surface;
     static array<Surface, 10> s_number_surface;
     static array<pair<size_t, size_t>, 2> s_score_x;
+    static array<Surface, 10> m_text;
 
     // Player info
     array<Player, 2> m_player;
@@ -117,7 +132,9 @@ private:
     GameState m_state;
     GameType m_type;
     KbdInput *m_local_kbd;
-    EndPoint<Message, Message> *m_tcp;
+    EndPoint<Message> *m_tcp;
+    Message m_send_msg;
+    bool m_restart_on_update;
 };
 
 /* -------------------------------------------------------------------------- */

@@ -26,7 +26,7 @@ const static string ADDRESS("127.0.0.1");
 
 void RunServer()
 {
-    TcpServer<int, int> server(PORT);
+    TcpServer<int> server(PORT);
 
     cout << "server setup" << endl;
 
@@ -53,7 +53,7 @@ void RunServer()
 
 void RunClient()
 {
-    TcpClient<int, int> client(ADDRESS, PORT);
+    TcpClient<int> client(ADDRESS, PORT);
 
     this_thread::sleep_for(milliseconds(250));
 

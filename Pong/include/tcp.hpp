@@ -49,15 +49,15 @@
  *  Abstract tcp connection
  * -------------------------------------------------------------------------- */
 
-template<typename SendMsg, typename ReceiveMsg>
-class Tcp : public EndPoint<SendMsg, ReceiveMsg>
+template<typename Msg>
+class Tcp : public EndPoint<Msg>
 {
 public:
     explicit Tcp(const string &addr_, int port_);
     virtual ~Tcp() = 0;
 
-    void Send(const SendMsg &msg_) override;
-    bool Receive(ReceiveMsg &msg_) override;
+    void Send(const Msg &msg_) override;
+    bool Receive(Msg &msg_) override;
 
     ConnectionState GetState() const override;
 
@@ -74,8 +74,8 @@ protected:
  *  TCP server
  * -------------------------------------------------------------------------- */
 
-template<typename SendMsg, typename ReceiveMsg>
-class TcpServer : public Tcp<SendMsg, ReceiveMsg>
+template<typename Msg>
+class TcpServer : public Tcp<Msg>
 {
 public:
     explicit TcpServer(int port_);
@@ -92,8 +92,8 @@ private:
  *  TCP client
  * -------------------------------------------------------------------------- */
 
-template<typename SendMsg, typename ReceiveMsg>
-class TcpClient : public Tcp<SendMsg, ReceiveMsg>
+template<typename Msg>
+class TcpClient : public Tcp<Msg>
 {
 public:
     explicit TcpClient(const string &addr_, int port_);
@@ -107,8 +107,8 @@ public:
  *  Abstract tcp connection implementation
  * -------------------------------------------------------------------------- */
 
-template<typename SendMsg, typename ReceiveMsg>
-Tcp<SendMsg, ReceiveMsg>::Tcp(const string &addr_, int port_) :
+template<typename Msg>
+Tcp<Msg>::Tcp(const string &addr_, int port_) :
     m_state(ConnectionState::Connecting),
     m_socket(0),
     m_addr{ 0 }
@@ -130,22 +130,22 @@ Tcp<SendMsg, ReceiveMsg>::Tcp(const string &addr_, int port_) :
     m_addr.sin_addr.s_addr = inet_addr(addr_.c_str());
 }
 
-template<typename SendMsg, typename ReceiveMsg>
-Tcp<SendMsg, ReceiveMsg>::~Tcp()
+template<typename Msg>
+Tcp<Msg>::~Tcp()
 {
     close(m_socket);
 }
 
-template<typename SendMsg, typename ReceiveMsg>
-void Tcp<SendMsg, ReceiveMsg>::Send(const SendMsg &msg_)
+template<typename Msg>
+void Tcp<Msg>::Send(const Msg &msg_)
 {
-    write(m_socket, &msg_, sizeof(SendMsg));
+    write(m_socket, &msg_, sizeof(Msg));
 }
 
-template<typename SendMsg, typename ReceiveMsg>
-bool Tcp<SendMsg, ReceiveMsg>::Receive(ReceiveMsg &msg_)
+template<typename Msg>
+bool Tcp<Msg>::Receive(Msg &msg_)
 {
-    int msg_size = read(m_socket, &msg_, sizeof(ReceiveMsg));
+    int msg_size = read(m_socket, &msg_, sizeof(Msg));
 
     if (0 == msg_size)
     {
@@ -155,14 +155,14 @@ bool Tcp<SendMsg, ReceiveMsg>::Receive(ReceiveMsg &msg_)
     return (msg_size > 0);
 }
 
-template<typename SendMsg, typename ReceiveMsg>
-ConnectionState Tcp<SendMsg, ReceiveMsg>::GetState() const
+template<typename Msg>
+ConnectionState Tcp<Msg>::GetState() const
 {
     return m_state;    
 }
 
-template<typename SendMsg, typename ReceiveMsg>
-sockaddr *Tcp<SendMsg, ReceiveMsg>::GetAddress()
+template<typename Msg>
+sockaddr *Tcp<Msg>::GetAddress()
 {
     return reinterpret_cast<sockaddr*>(&m_addr);
 }
@@ -171,9 +171,9 @@ sockaddr *Tcp<SendMsg, ReceiveMsg>::GetAddress()
  *  TCP server implementation
  * -------------------------------------------------------------------------- */
 
-template<typename SendMsg, typename ReceiveMsg>
-TcpServer<SendMsg, ReceiveMsg>::TcpServer(int port_) :
-    Tcp<SendMsg, ReceiveMsg>("127.0.0.1", port_),
+template<typename Msg>
+TcpServer<Msg>::TcpServer(int port_) :
+    Tcp<Msg>("127.0.0.1", port_),
     m_server_socket(this->m_socket)
 {
     this->m_addr.sin_addr.s_addr = htonl(INADDR_ANY);
@@ -185,14 +185,14 @@ TcpServer<SendMsg, ReceiveMsg>::TcpServer(int port_) :
     }
 }
 
-template<typename SendMsg, typename ReceiveMsg>
-TcpServer<SendMsg, ReceiveMsg>::~TcpServer()
+template<typename Msg>
+TcpServer<Msg>::~TcpServer()
 {
     this->Disconnect();
 }
 
-template<typename SendMsg, typename ReceiveMsg>
-void TcpServer<SendMsg, ReceiveMsg>::Connect()
+template<typename Msg>
+void TcpServer<Msg>::Connect()
 {
     socklen_t len = sizeof(sockaddr_in);
     int accepted = accept(this->m_socket, this->GetAddress(), &len);
@@ -202,8 +202,8 @@ void TcpServer<SendMsg, ReceiveMsg>::Connect()
     this->m_state = ConnectionState::Connected;
 }
 
-template<typename SendMsg, typename ReceiveMsg>
-void TcpServer<SendMsg, ReceiveMsg>::Disconnect()
+template<typename Msg>
+void TcpServer<Msg>::Disconnect()
 {
     close(m_server_socket);
     this->m_state = ConnectionState::Disconnected;
@@ -213,21 +213,21 @@ void TcpServer<SendMsg, ReceiveMsg>::Disconnect()
  *  TCP client implementation
  * -------------------------------------------------------------------------- */
 
-template<typename SendMsg, typename ReceiveMsg>
-TcpClient<SendMsg, ReceiveMsg>::TcpClient(const string &addr_, int port_) :
-    Tcp<SendMsg, ReceiveMsg>(addr_, port_)
+template<typename Msg>
+TcpClient<Msg>::TcpClient(const string &addr_, int port_) :
+    Tcp<Msg>(addr_, port_)
 {
     // Do nothing
 }
 
-template<typename SendMsg, typename ReceiveMsg>
-TcpClient<SendMsg, ReceiveMsg>::~TcpClient()
+template<typename Msg>
+TcpClient<Msg>::~TcpClient()
 {
     this->Disconnect();
 }
 
-template<typename SendMsg, typename ReceiveMsg>
-void TcpClient<SendMsg, ReceiveMsg>::Connect()
+template<typename Msg>
+void TcpClient<Msg>::Connect()
 {
     int connect_result = connect(this->m_socket, this->GetAddress(), sizeof(sockaddr_in));
     if (0 > connect_result) return;
@@ -235,8 +235,8 @@ void TcpClient<SendMsg, ReceiveMsg>::Connect()
     this->m_state = ConnectionState::Connected;
 }
 
-template<typename SendMsg, typename ReceiveMsg>
-void TcpClient<SendMsg, ReceiveMsg>::Disconnect()
+template<typename Msg>
+void TcpClient<Msg>::Disconnect()
 {
     this->m_state = ConnectionState::Disconnected;
 }

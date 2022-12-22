@@ -20,10 +20,61 @@
 #include "config.h"
 
 /* -------------------------------------------------------------------------- *
+ *  Configuration
+ * -------------------------------------------------------------------------- */
+
+static constexpr struct
+{
+    // Tcp connection
+    const char *ip = "127.0.0.1";
+    size_t port = 5000;
+
+    // Gameplay attributes
+    struct
+    {
+        float velocity = 10.0f;
+        float acceleration = 1.0f;
+    } ball;
+
+    struct
+    {
+        float speed = 20.0f;
+        size_t length = 5;
+
+        struct
+        {
+            int up = KEY_UP;
+            int down = KEY_DOWN;
+        } first;
+
+        struct
+        {
+            int up = KEY_Q;
+            int down = KEY_A;
+        } second;
+
+    } player;
+    size_t win_score = 1;
+
+    struct
+    {
+        int pause = KEY_P;
+        int exit = KEY_ESC;
+        int restart = KEY_R;
+        
+        int local_choise = KEY_L;
+        int server_choise = KEY_S;
+        int client_choise = KEY_C;
+    } key;
+
+} CONFIG;
+
+/* -------------------------------------------------------------------------- *
  *  Misc
  * -------------------------------------------------------------------------- */
 
-static const Pixel W( 100, 100, 100 );
+static const Pixel W( 255, 255, 255 );
+static const Pixel G( 100, 100, 100 );
 static const Pixel B( 0, 0, 0 );
 
 /* -------------------------------------------------------------------------- *
@@ -32,9 +83,15 @@ static const Pixel B( 0, 0, 0 );
 
 Pong::Pong() :
     m_player(),
-    m_ball{},
+    m_ball{0},
     m_delta(0),
-    m_timestamp{ steady_clock::now(), steady_clock::now() }
+    m_timestamp{ steady_clock::now(), steady_clock::now() },
+    m_state(GameState::ChooseType),
+    m_type(GameType::Local),
+    m_local_kbd(nullptr),
+    m_tcp(nullptr),
+    m_send_msg{0},
+    m_restart_on_update(false)
 {
     // Do nothing
 }
@@ -44,6 +101,7 @@ Pong::~Pong() {}
 void Pong::Initialize()
 {
     m_state = GameState::ChooseType;
+    m_restart_on_update = false;
 
     RespawnBall();
     m_player = array<Player, 2>();
@@ -54,137 +112,248 @@ void Pong::Initialize()
 
 void Pong::HandleInput()
 {
-    UpdateDelta();
+    m_local_kbd->Update();
 
     switch (m_state)    // State machine
     {
         case GameState::ChooseType:
-            if (m_local_kbd->IsPressed(KEY_L))
-            {
+            if (m_local_kbd->IsPressed(CONFIG.key.local_choise))
+            {   // Local play
                 m_type = GameType::Local;
+                m_state = GameState::Run;
             }
-
-
-
+            else if (m_local_kbd->IsPressed(CONFIG.key.server_choise))
+            {   // Online play
+                m_type = GameType::Server;  
+                m_state = GameState::Connect;
+            }
+            else if (m_local_kbd->IsPressed(CONFIG.key.client_choise))
+            {   // Online play
+                m_type = GameType::Client;  
+                m_state = GameState::Connect;
+            }
+            if (m_state != GameState::ChooseType)
+            {
+                InitializePlayers();
+            }
             break;
 
         case GameState::Connect:
+            if (m_local_kbd->IsPressed(CONFIG.key.exit))
+            {   // Quit connection
+                m_state = GameState::Close; 
+            }
             break;
 
         case GameState::Run:
+            if (m_local_kbd->IsPressed(CONFIG.key.pause))
+            {   // Pause game
+                m_state = GameState::Pause;
+                m_send_msg.command = MessageControl::ToPause;
+            }
+            else if (m_local_kbd->IsPressed(CONFIG.key.exit))
+            {   // Quit game
+                m_state = GameState::Close;
+                m_send_msg.command = MessageControl::ToQuit;
+            }
+            else if (m_local_kbd->IsPressed(CONFIG.key.restart))
+            {   // Restart game
+                m_restart_on_update = true;
+                m_send_msg.command = MessageControl::ToRestart;
+            }
+            else for (size_t i = 0; i < m_player.size(); ++i)
+            {   // Players input
+                if (m_player[i].device == nullptr) continue;    // Skip for online
+
+                // Move player acording to input
+                int direction =
+                    (m_player[i].device->IsDown(m_player[i].down_key)) -    // pos
+                    (m_player[i].device->IsDown(m_player[i].up_key));       // neg
+                m_player[i].y += direction * m_delta * CONFIG.player.speed;
+            }
             break;
 
         case GameState::Pause:
+            if (m_local_kbd->IsPressed(CONFIG.key.pause))
+            {   // Continue game
+                m_state = GameState::Run;
+                m_send_msg.command = MessageControl::ToContinue;
+            }
+            else if (m_local_kbd->IsPressed(CONFIG.key.exit))
+            {   // Quit game
+                m_state = GameState::Close;
+                m_send_msg.command = MessageControl::ToQuit;
+            }
+            else if (m_local_kbd->IsPressed(CONFIG.key.restart))
+            {   // Restart game
+                m_restart_on_update = true;
+                m_send_msg.command = MessageControl::ToRestart;
+            }
             break;
 
         case GameState::End:
+            if (m_local_kbd->IsReleased(CONFIG.key.exit))
+            {   // Quit game
+                m_state = GameState::Close;
+                m_send_msg.command = MessageControl::ToQuit;
+            }
             break;
 
         case GameState::Close:
+            // Do nothing
             break;
-    }
-
-    m_player[0].device->Update();
-
-    if (AnyDevice(&KbdInput::IsPressed, EXIT_KEY))
-    {
-        m_state = GameState::Close;
-        return;
-    }
-
-    if (AnyDevice(&KbdInput::IsPressed, RESTART_KEY))
-    {
-        Deinitialize();
-        Initialize();
-        return;
-    }
-
-    if (AnyDevice(&KbdInput::IsPressed, PAUSE_KEY))
-    {
-        // use state machine to handle pause
-        static GameState state_maping[] =
-        {
-            /* Run      => */   GameState::Pause,
-            /* Pause    => */   GameState::Run,
-            /* End      => */   GameState::End,
-            /* Closing  => */   GameState::Close
-        };
-
-        m_state = state_maping[m_state];
-    }
-
-    // For a running game, accept input
-    if (GameState::Run != m_state) return;
-
-    for (size_t i = 0; i < 2; ++i)
-    {
-        // Get movement direction
-        int direction =
-            (m_player[i].device->IsDown(m_player[i].down_key)) -    // pos sign
-            (m_player[i].device->IsDown(m_player[i].up_key));       // neg sign
-
-        m_player[i].y += direction * m_delta * PLAYER_SPEED;
     }
 }
 
 void Pong::Update()
 {
-    // Do not update if game is not running
-    if (GameState::Run != m_state) return;
+    UpdateDelta();
 
-    m_ball.x += m_ball.direction_x * m_ball.velocity * m_delta;
-    m_ball.y += m_ball.direction_y * m_ball.velocity * m_delta;
-    m_ball.velocity += m_ball.acceleration * m_delta;
-
-    // Snap players to boundaries
-    for (size_t i = 0; i < 2; ++i)
+    int new_direction = 0;
+    switch (m_state)
     {
-        m_player[i].y = max(0.0f,
-                            min(m_player[i].y,
-                                float(CONFIG_HEIGHT - PLAYER_LENGTH)));
+        case GameState::ChooseType:
+            // Do nothing
+            break;
+
+        case GameState::Connect:
+            m_tcp->Connect();
+            if (m_tcp->GetState() == ConnectionState::Connected)
+            {
+                m_state = GameState::Run;
+            }
+            break;
+
+        case GameState::Run:
+            // Snap players to boundaries
+            for (size_t i = 0; i < 2; ++i)
+            {
+                m_player[i].y = max(0.0f,
+                                    min(m_player[i].y,
+                                        float(CONFIG_HEIGHT - CONFIG.player.length)));
+            }
+
+            // Bounce of players
+            if ((m_ball.x > CONFIG_WIDTH - 1) &&    // Right player column
+                (m_player[0].y < m_ball.y) &&       // In player's boundary
+                (m_ball.y < m_player[0].y + CONFIG.player.length))
+            {
+                m_ball.direction_x = -abs(m_ball.direction_x);
+            }
+            else if ((m_ball.x < 1) &&              // Left player column
+                (m_player[1].y < m_ball.y) &&       // In player's boundary
+                (m_ball.y < m_player[1].y + CONFIG.player.length))
+            {
+                m_ball.direction_x = abs(m_ball.direction_x);
+            }
+
+            if (m_type == GameType::Client)
+            {   
+                break;  // Get ball properties and score from server
+            }
+
+            // Move ball
+            m_ball.x += m_ball.direction_x * m_ball.velocity * m_delta;
+            m_ball.y += m_ball.direction_y * m_ball.velocity * m_delta;
+            m_ball.velocity += m_ball.acceleration * m_delta;
+
+            // Ball bounce off upper and lower boundaries
+            new_direction = (m_ball.y < 0) -                    // downwards
+                            (m_ball.y > CONFIG_HEIGHT);         // upwards
+            if (0 != new_direction)
+            {
+                m_ball.direction_y = new_direction * abs(m_ball.direction_y);
+            }
+
+            // Score when out of boundary
+            else if (m_ball.x < 0)
+            {
+                ++m_player[0].score;
+                RespawnBall();
+            }
+            else if (m_ball.x > CONFIG_WIDTH)
+            {
+                ++m_player[1].score;
+                RespawnBall();
+            }
+
+            // Test end of game condition
+            if ((CONFIG.win_score == m_player[0].score) ||
+                (CONFIG.win_score == m_player[1].score))
+            {
+                m_state = GameState::End;
+                m_send_msg.command = MessageControl::ToEnd;
+                break;
+            }
+            break;
+        
+        case GameState::Pause:
+            // Do nothing
+            break;
+
+        case GameState::End:
+            // Do nothing
+            break;
+
+        case GameState::Close:
+            // Handle at the end
+            break;
     }
 
-    // Bounce of upper and lower boundaries
+    if (m_type == GameType::Server)
+    {   
+        // Build message
+        m_send_msg.ball_x = m_ball.x;
+        m_send_msg.ball_y = m_ball.y;
+        m_send_msg.player_y = m_player[0].y;
+        m_send_msg.player1_score = m_player[0].score;
+        m_send_msg.player2_score = m_player[1].score;
 
-    int new_direction = (m_ball.y < 0) -                    // downwards
-                        (m_ball.y > CONFIG_HEIGHT);  // upwards
+        // Send game information
+        m_tcp->Send(m_send_msg);
 
-    if (0 != new_direction)
+        // Receive player 2 information
+        Message recv_msg;
+        if (m_tcp->Receive(recv_msg))
+        {
+            m_player[1].y = recv_msg.player_y;
+
+            if (m_send_msg.command < recv_msg.command)
+            {
+                HandleCommand(recv_msg.command);
+            }
+        }
+    }
+    else if (m_type == GameType::Client)
     {
-        m_ball.direction_y = new_direction * abs(m_ball.direction_y);
+        // Build message
+        m_send_msg.player_y = m_player[1].y;
+
+        // Receive player 1 information
+        Message recv_msg;
+        if (m_tcp->Receive(recv_msg))
+        {
+            m_ball.x = recv_msg.ball_x;
+            m_ball.y = recv_msg.ball_y;
+            m_player[0].y = recv_msg.player_y;
+            m_player[0].score = recv_msg.player1_score;
+            m_player[1].score = recv_msg.player2_score;
+
+            if (m_send_msg.command < recv_msg.command)
+            {
+                HandleCommand(recv_msg.command);
+            }
+        }
+
+        // Send game information
+        m_tcp->Send(m_send_msg);
     }
 
-    // Bounce of players
-    if ((m_ball.x > CONFIG_WIDTH - 1) &&            // Right player column
-        (m_player[0].y < m_ball.y) &&               // In player's boundary
-        (m_ball.y < m_player[0].y + PLAYER_LENGTH))
-    {
-        m_ball.direction_x = -abs(m_ball.direction_x);
-    }
-    else if ((m_ball.x < 1) &&                      // Left player column
-        (m_player[1].y < m_ball.y) &&               // In player's boundary
-        (m_ball.y < m_player[1].y + PLAYER_LENGTH))
-    {
-        m_ball.direction_x = abs(m_ball.direction_x);
-    }
-    
-    // Score when out of boundary
-    else if (m_ball.x < 0)
-    {
-        ++m_player[0].score;
-        RespawnBall();
-    }
-    else if (m_ball.x > CONFIG_WIDTH)
-    {
-        ++m_player[1].score;
-        RespawnBall();
-    }
+    m_send_msg.command = MessageControl::None;  // Reset message
 
-    // Test end of game condition
-    if ((WIN_SCORE == m_player[0].score) ||
-        (WIN_SCORE == m_player[1].score))
+    if (m_restart_on_update)
     {
-        m_state = GameState::End;
+        Restart();
     }
 }
 
@@ -218,7 +387,8 @@ void Pong::Draw(SurfaceWindow *window_)
 
 void Pong::Deinitialize()
 {
-    delete m_player[0].device;
+    delete m_local_kbd; m_local_kbd = nullptr;
+    delete m_tcp; m_tcp = nullptr;
 }
 
 bool Pong::IsRunning()
@@ -228,10 +398,10 @@ bool Pong::IsRunning()
 
 void Pong::RespawnBall()
 {
-    m_ball.acceleration = BALL_ACCELERATION;
+    m_ball.acceleration = CONFIG.ball.acceleration;
     m_ball.direction_x = ((rand() % 2) ? 1 : -1) / sqrt(2);
     m_ball.direction_y = ((rand() % 2) ? 1 : -1) / sqrt(2);
-    m_ball.velocity = BALL_INIT_VELOCITY;
+    m_ball.velocity = CONFIG.ball.velocity;
     m_ball.x = CONFIG_WIDTH / 2;
     m_ball.y = CONFIG_HEIGHT / 2;
 }
@@ -255,10 +425,12 @@ bool Pong::AnyDevice(bool (KbdInput::* test_)(int), int key_)
 void Pong::InitializePlayers()
 {
     // Default as local players
-    m_player[0] = { float(CONFIG_HEIGHT - PLAYER_LENGTH) / 2,
-                    0, PLAYER_1_UP,  PLAYER_1_DOWN, m_local_kbd };
-    m_player[1] = { float(CONFIG_HEIGHT - PLAYER_LENGTH) / 2,
-                    0, PLAYER_2_UP, PLAYER_2_DOWN, m_local_kbd };
+    m_player[0] = { float(CONFIG_HEIGHT - CONFIG.player.length) / 2,
+                    0, CONFIG.player.first.up,  CONFIG.player.first.down,
+                    m_local_kbd };
+    m_player[1] = { float(CONFIG_HEIGHT - CONFIG.player.length) / 2,
+                    0, CONFIG.player.second.up, CONFIG.player.second.down,
+                    m_local_kbd };
 
     switch (m_type)
     {
@@ -267,12 +439,48 @@ void Pong::InitializePlayers()
         
         case GameType::Client:
             m_player[0].device = nullptr;   // Disable input
-            m_tcp = new TcpClient<Message, Message>(IP_ADDRESS, PORT);
+            m_tcp = new TcpClient<Message>(CONFIG.ip, CONFIG.port);
             break;
 
         case GameType::Server:
             m_player[1].device = nullptr;   // Disable input
-            m_tcp = new TcpServer<Message, Message>(PORT);
+            m_tcp = new TcpServer<Message>(CONFIG.port);
+            break;
+    }
+}
+
+void Pong::Restart()
+{
+    Deinitialize();
+    Initialize();
+}
+
+void Pong::HandleCommand(MessageControl command_)
+{
+    switch (command_)
+    {
+        case MessageControl::None:
+            // Do nothing
+            break;
+
+        case MessageControl::ToPause:
+            m_state = GameState::Pause;
+            break;
+
+        case MessageControl::ToContinue:
+            m_state = GameState::Run;
+            break;
+
+        case MessageControl::ToEnd:
+            m_state = GameState::End;
+            break;
+
+        case MessageControl::ToRestart:
+            m_restart_on_update = true;
+            break;
+
+        case MessageControl::ToQuit:
+            m_state = GameState::Close;
             break;
     }
 }
@@ -281,76 +489,180 @@ void Pong::InitializePlayers()
  *  Pong Static Variables
  * -------------------------------------------------------------------------- */
 
-Surface Pong::s_player_surface(1, PLAYER_LENGTH, Pixel(255, 255, 255));
+Surface Pong::s_player_surface(1, CONFIG.player.length, W);
 
-Surface Pong::s_ball_surface(1, 1, Pixel(255, 255, 255));
+Surface Pong::s_ball_surface(1, 1, W);
 
-Surface Pong::s_vertical_line_surface(1, CONFIG_HEIGHT, W);
+Surface Pong::s_vertical_line_surface(1, CONFIG_HEIGHT, G);
 
 array<Surface, 10> Pong::s_number_surface{
     Surface({   // 0
-        { W, W, W },
-        { W, B, W },
-        { W, B, W },
-        { W, B, W },
-        { W, W, W } }),
+        { G, G, G },
+        { G, B, G },
+        { G, B, G },
+        { G, B, G },
+        { G, G, G } }),
     Surface({   // 1
-        { B, W, B },
-        { B, W, B },
-        { B, W, B },
-        { B, W, B },
-        { B, W, B } }),
+        { B, G, B },
+        { B, G, B },
+        { B, G, B },
+        { B, G, B },
+        { B, G, B } }),
     Surface({   // 2
-        { W, W, W },
-        { B, B, W },
-        { W, W, W },
-        { W, B, B },
-        { W, W, W } }),
+        { G, G, G },
+        { B, B, G },
+        { G, G, G },
+        { G, B, B },
+        { G, G, G } }),
     Surface({   // 3
-        { W, W, W },
-        { B, B, W },
-        { W, W, W },
-        { B, B, W },
-        { W, W, W } }),
+        { G, G, G },
+        { B, B, G },
+        { G, G, G },
+        { B, B, G },
+        { G, G, G } }),
     Surface({   // 4
-        { W, B, W },
-        { W, B, W },
-        { W, W, W },
-        { B, B, W },
-        { B, B, W } }),
+        { G, B, G },
+        { G, B, G },
+        { G, G, G },
+        { B, B, G },
+        { B, B, G } }),
     Surface({   // 5
-        { W, W, W },
-        { W, B, B },
-        { W, W, W },
-        { B, B, W },
-        { W, W, W } }),
+        { G, G, G },
+        { G, B, B },
+        { G, G, G },
+        { B, B, G },
+        { G, G, G } }),
     Surface({   // 6
-        { W, W, W },
-        { W, B, B },
-        { W, W, W },
-        { W, B, W },
-        { W, W, W } }),
+        { G, G, G },
+        { G, B, B },
+        { G, G, G },
+        { G, B, G },
+        { G, G, G } }),
     Surface({   // 7
-        { W, W, W },
-        { B, B, W },
-        { B, B, W },
-        { B, B, W },
-        { B, B, W } }),
+        { G, G, G },
+        { B, B, G },
+        { B, B, G },
+        { B, B, G },
+        { B, B, G } }),
     Surface({   // 8
-        { W, W, W },
-        { W, B, W },
-        { W, W, W },
-        { W, B, W },
-        { W, W, W } }),
+        { G, G, G },
+        { G, B, G },
+        { G, G, G },
+        { G, B, G },
+        { G, G, G } }),
     Surface({   // 9
-        { W, W, W },
-        { W, B, W },
-        { W, W, W },
-        { B, B, W },
-        { W, W, W } }),
+        { G, G, G },
+        { G, B, G },
+        { G, G, G },
+        { B, B, G },
+        { G, G, G } })
 };
 
 array<pair<size_t, size_t>, 2> Pong::s_score_x{{
     { CONFIG_WIDTH / 2 + 2, CONFIG_WIDTH / 2 + 6 },
     { CONFIG_WIDTH / 2 - 8, CONFIG_WIDTH / 2 - 4 }
 }};
+
+array<Surface, 10> Pong::m_text{
+    Surface({   // Press key:
+            { B, B, B, B, B, B, B, B, B },
+            { B },
+            { B },
+            { B },
+            { B },
+            { B },
+            { B },
+            { B },
+            { B } }),
+    Surface({   // Local
+            { B },
+            { B },
+            { B },
+            { B },
+            { B },
+            { B },
+            { B },
+            { B },
+            { B } }),
+    Surface({   // Server
+            { B },
+            { B },
+            { B },
+            { B },
+            { B },
+            { B },
+            { B },
+            { B },
+            { B } }),
+    Surface({   // Client
+            { B },
+            { B },
+            { B },
+            { B },
+            { B },
+            { B },
+            { B },
+            { B },
+            { B } }),
+    Surface({   // Waiting for
+            { B },
+            { B },
+            { B },
+            { B },
+            { B },
+            { B },
+            { B },
+            { B },
+            { B } }),
+    Surface({   // server
+            { B },
+            { B },
+            { B },
+            { B },
+            { B },
+            { B },
+            { B },
+            { B },
+            { B } }),
+    Surface({   // client
+            { B },
+            { B },
+            { B },
+            { B },
+            { B },
+            { B },
+            { B },
+            { B },
+            { B } }),
+    Surface({   // Player _ wins
+            { B },
+            { B },
+            { B },
+            { B },
+            { B },
+            { B },
+            { B },
+            { B },
+            { B } }),
+    Surface({   // one
+            { B },
+            { B },
+            { B },
+            { B },
+            { B },
+            { B },
+            { B },
+            { B },
+            { B } }),
+
+    Surface({   // two
+            { B },
+            { B },
+            { B },
+            { B },
+            { B },
+            { B },
+            { B },
+            { B },
+            { B } })
+};

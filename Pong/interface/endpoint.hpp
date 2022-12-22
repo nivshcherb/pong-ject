@@ -27,7 +27,7 @@ enum ConnectionState
  *  EndPoint Interface
  * -------------------------------------------------------------------------- */
 
-template<typename SendMsg, typename ReceiveMsg>
+template<typename Msg>
 class EndPoint
 {
 public:
@@ -44,16 +44,16 @@ public:
     // Disconnect current endpoint
     virtual void Disconnect() = 0;
 
-    virtual void Send(const SendMsg &msg_) = 0;
+    virtual void Send(const Msg &msg_) = 0;
 
-    virtual bool Receive(ReceiveMsg &msg_) = 0;
+    virtual bool Receive(Msg &msg_) = 0;
 
     // Return the current state of the endpoint
     virtual ConnectionState GetState() const = 0;
 };
 
-template<typename SendMsg, typename ReceiveMsg>
-inline EndPoint<SendMsg, ReceiveMsg>::~EndPoint() { }
+template<typename Msg>
+inline EndPoint<Msg>::~EndPoint() { }
 
 /* -------------------------------------------------------------------------- */
 #endif /* __ENDPOINT_HPP__ */
