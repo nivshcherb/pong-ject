@@ -14,6 +14,9 @@
 #include <array>
     using std::array;
 
+#include <unordered_map>
+    using std::unordered_map;
+
 using std::pair;
 
 #include "game_logic.hpp"
@@ -117,12 +120,9 @@ private:
     void HandleCommand(MessageControl command_);
 
     // Graphic loading
-    static Surface s_player_surface;
-    static Surface s_ball_surface;
-    static Surface s_vertical_line_surface;
-    static array<Surface, 10> s_number_surface;
+    static unordered_map<string, Surface> s_surface;
+
     static array<pair<size_t, size_t>, 2> s_score_x;
-    static array<Surface, 10> m_text;
 
     // Player info
     array<Player, 2> m_player;

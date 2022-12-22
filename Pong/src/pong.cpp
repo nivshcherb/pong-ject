@@ -2,6 +2,14 @@
  *  Libraries
  * -------------------------------------------------------------------------- */
 
+#include <iostream> // TESTING ONLY
+    using std::cout;
+    using std::endl;
+
+#include <fstream>
+    using std::fstream;
+    using std::ios_base;
+
 #include <algorithm>
     using std::min;
     using std::max;
@@ -23,7 +31,7 @@
  *  Configuration
  * -------------------------------------------------------------------------- */
 
-static constexpr struct
+static const struct
 {
     // Tcp connection
     const char *ip = "127.0.0.1";
@@ -66,6 +74,8 @@ static constexpr struct
         int server_choise = KEY_S;
         int client_choise = KEY_C;
     } key;
+
+    string resource_dir = "./resources/";
 
 } CONFIG;
 
@@ -192,7 +202,12 @@ void Pong::HandleInput()
             break;
 
         case GameState::End:
-            if (m_local_kbd->IsReleased(CONFIG.key.exit))
+            if (m_local_kbd->IsPressed(CONFIG.key.restart))
+            {   // Restart game
+                m_restart_on_update = true;
+                m_send_msg.command = MessageControl::ToRestart;
+            }
+            else if (m_local_kbd->IsReleased(CONFIG.key.exit))
             {   // Quit game
                 m_state = GameState::Close;
                 m_send_msg.command = MessageControl::ToQuit;
@@ -300,6 +315,8 @@ void Pong::Update()
             break;
     }
 
+    if (m_state == GameState::Connect)  return; // Skip is not connected
+
     if (m_type == GameType::Server)
     {   
         // Build message
@@ -357,30 +374,76 @@ void Pong::Update()
     }
 }
 
+string DigitToString(int digit_)
+{
+    return string(1, char(digit_) + '0');
+}
+
 void Pong::Draw(SurfaceWindow *window_)
 {
     window_->Clean();   // Start
 
-    // Players score
-    for (size_t i = 0; i < 2; ++i)
+    Surface *temp_surface = nullptr;
+    switch (m_state)
     {
-        window_->Apply(&s_number_surface[m_player[i].score % 10],
-                        s_score_x[i].second, 1);
-        window_->Apply(&s_number_surface[m_player[i].score / 10],
-                        s_score_x[i].first, 1);
+        case GameState::ChooseType:
+            window_->Apply(&s_surface.at("type_key"), 2, 2);
+            window_->Apply(&s_surface.at("type_local"), 6, 9);
+            window_->Apply(&s_surface.at("type_server"), 6, 18);
+            window_->Apply(&s_surface.at("type_client"), 6, 27);
+            break;
+
+        case GameState::Connect:
+
+            window_->Apply(&s_surface.at("conn"), 2, 2);
+
+            temp_surface = (m_type == GameType::Server)
+                ? &s_surface.at("conn_client")
+                : &s_surface.at("conn_server");
+
+            window_->Apply(temp_surface, 2, 9);
+
+            break;
+
+        case GameState::Run:
+        case GameState::Pause:
+            // Players score
+            for (size_t i = 0; i < 2; ++i)
+            {
+                window_->Apply(
+                    &s_surface.at(DigitToString(m_player[i].score % 10)),
+                    s_score_x[i].second, 1);
+                window_->Apply(
+                    &s_surface.at(DigitToString(m_player[i].score / 10)),
+                    s_score_x[i].first, 1);
+            }
+
+            // Vertical bar
+            window_->Apply(&s_surface.at("vertical"), CONFIG_WIDTH / 2, 0);
+
+            // Player 1
+            window_->Apply(&s_surface.at("player"), 0, (int)m_player[1].y);
+
+            // Player 2
+            window_->Apply(&s_surface.at("player"), CONFIG_WIDTH - 1, (int)m_player[0].y);
+
+            // Ball
+            window_->Apply(&s_surface.at("ball"), (int)m_ball.x, (int)m_ball.y);
+            break;
+
+        case GameState::End:
+            window_->Apply(&s_surface.at("win"), 2, 2);
+
+            temp_surface = (m_player[0].score > m_player[1].score)
+                ? &s_surface.at("one")
+                : &s_surface.at("two");
+
+            window_->Apply(temp_surface, 2, 8);
+            break;
+
+        case GameState::Close:
+            break;
     }
-
-    // Vertical bar
-    window_->Apply(&s_vertical_line_surface, CONFIG_WIDTH / 2, 0);
-
-    // Player 1
-    window_->Apply(&s_player_surface, 0, (int)m_player[1].y);
-
-    // Player 2
-    window_->Apply(&s_player_surface, CONFIG_WIDTH - 1, (int)m_player[0].y);
-
-    // Ball
-    window_->Apply(&s_ball_surface, (int)m_ball.x, (int)m_ball.y);
 
     window_->Draw();    // End
 }
@@ -451,8 +514,10 @@ void Pong::InitializePlayers()
 
 void Pong::Restart()
 {
-    Deinitialize();
-    Initialize();
+    m_state = GameState::Run;
+    m_restart_on_update = false;
+    InitializePlayers();
+    RespawnBall();
 }
 
 void Pong::HandleCommand(MessageControl command_)
@@ -486,183 +551,74 @@ void Pong::HandleCommand(MessageControl command_)
 }
 
 /* -------------------------------------------------------------------------- *
+ *  BMP Loader
+ * -------------------------------------------------------------------------- */
+#include <iostream>
+
+static Surface LoadRaw(const string &path_, size_t width_, size_t height_)
+{
+    Surface ret(width_, height_);
+
+    fstream file;
+    file.open(path_, ios_base::in);
+    if (file.fail()) THROW_ERROR;
+
+    for (size_t y = 0; y < height_; ++y)
+    {
+        for (size_t x = 0; x < width_; ++x)
+        {
+            char buffer[5]= { 0 };
+            file.get(buffer, 5);
+            ret[y][x] = Pixel(buffer[0], buffer[1], buffer[2]);
+        }
+    }
+
+    file.close();
+
+    return ret;
+}
+
+/* -------------------------------------------------------------------------- *
  *  Pong Static Variables
  * -------------------------------------------------------------------------- */
 
-Surface Pong::s_player_surface(1, CONFIG.player.length, W);
+unordered_map<string, Surface> Pong::s_surface{
+    // Base
+    { "player", Surface(1, CONFIG.player.length, W) },
+    { "ball", Surface(1, 1, W) },
+    { "vertical", Surface(1, CONFIG_HEIGHT, G) },
 
-Surface Pong::s_ball_surface(1, 1, W);
+    // Score
+    { "0", LoadRaw(CONFIG.resource_dir + "score_0.raw", 3, 5) },
+    { "1", LoadRaw(CONFIG.resource_dir + "score_1.raw", 3, 5) },
+    { "2", LoadRaw(CONFIG.resource_dir + "score_2.raw", 3, 5) },
+    { "3", LoadRaw(CONFIG.resource_dir + "score_3.raw", 3, 5) },
+    { "4", LoadRaw(CONFIG.resource_dir + "score_4.raw", 3, 5) },
+    { "5", LoadRaw(CONFIG.resource_dir + "score_5.raw", 3, 5) },
+    { "6", LoadRaw(CONFIG.resource_dir + "score_6.raw", 3, 5) },
+    { "7", LoadRaw(CONFIG.resource_dir + "score_7.raw", 3, 5) },
+    { "8", LoadRaw(CONFIG.resource_dir + "score_8.raw", 3, 5) },
+    { "9", LoadRaw(CONFIG.resource_dir + "score_9.raw", 3, 5) },
 
-Surface Pong::s_vertical_line_surface(1, CONFIG_HEIGHT, G);
+    // Game type screen
+    { "type_key", LoadRaw(CONFIG.resource_dir + "text_key.raw", 42, 5)},
+    { "type_local", LoadRaw(CONFIG.resource_dir + "text_wait_local.raw", 23, 7)},
+    { "type_server", LoadRaw(CONFIG.resource_dir + "text_wait_server.raw", 30, 7)},
+    { "type_client", LoadRaw(CONFIG.resource_dir + "text_wait_client.raw", 26, 7)},
 
-array<Surface, 10> Pong::s_number_surface{
-    Surface({   // 0
-        { G, G, G },
-        { G, B, G },
-        { G, B, G },
-        { G, B, G },
-        { G, G, G } }),
-    Surface({   // 1
-        { B, G, B },
-        { B, G, B },
-        { B, G, B },
-        { B, G, B },
-        { B, G, B } }),
-    Surface({   // 2
-        { G, G, G },
-        { B, B, G },
-        { G, G, G },
-        { G, B, B },
-        { G, G, G } }),
-    Surface({   // 3
-        { G, G, G },
-        { B, B, G },
-        { G, G, G },
-        { B, B, G },
-        { G, G, G } }),
-    Surface({   // 4
-        { G, B, G },
-        { G, B, G },
-        { G, G, G },
-        { B, B, G },
-        { B, B, G } }),
-    Surface({   // 5
-        { G, G, G },
-        { G, B, B },
-        { G, G, G },
-        { B, B, G },
-        { G, G, G } }),
-    Surface({   // 6
-        { G, G, G },
-        { G, B, B },
-        { G, G, G },
-        { G, B, G },
-        { G, G, G } }),
-    Surface({   // 7
-        { G, G, G },
-        { B, B, G },
-        { B, B, G },
-        { B, B, G },
-        { B, B, G } }),
-    Surface({   // 8
-        { G, G, G },
-        { G, B, G },
-        { G, G, G },
-        { G, B, G },
-        { G, G, G } }),
-    Surface({   // 9
-        { G, G, G },
-        { G, B, G },
-        { G, G, G },
-        { B, B, G },
-        { G, G, G } })
+    // Connecting screen
+    { "conn", LoadRaw(CONFIG.resource_dir + "text_conn_wait.raw", 38, 5)},
+    { "conn_server", LoadRaw(CONFIG.resource_dir + "text_conn_server.raw", 29, 5)},
+    { "conn_client", LoadRaw(CONFIG.resource_dir + "text_conn_client.raw", 29, 5)},
+
+    // Win screen
+    { "win", LoadRaw(CONFIG.resource_dir + "text_win.raw", 29, 17)},
+    { "one", LoadRaw(CONFIG.resource_dir + "text_one.raw", 14, 5)},
+    { "two", LoadRaw(CONFIG.resource_dir + "text_two.raw", 15, 5)},
+
 };
 
 array<pair<size_t, size_t>, 2> Pong::s_score_x{{
     { CONFIG_WIDTH / 2 + 2, CONFIG_WIDTH / 2 + 6 },
     { CONFIG_WIDTH / 2 - 8, CONFIG_WIDTH / 2 - 4 }
 }};
-
-array<Surface, 10> Pong::m_text{
-    Surface({   // Press key:
-            { B, B, B, B, B, B, B, B, B },
-            { B },
-            { B },
-            { B },
-            { B },
-            { B },
-            { B },
-            { B },
-            { B } }),
-    Surface({   // Local
-            { B },
-            { B },
-            { B },
-            { B },
-            { B },
-            { B },
-            { B },
-            { B },
-            { B } }),
-    Surface({   // Server
-            { B },
-            { B },
-            { B },
-            { B },
-            { B },
-            { B },
-            { B },
-            { B },
-            { B } }),
-    Surface({   // Client
-            { B },
-            { B },
-            { B },
-            { B },
-            { B },
-            { B },
-            { B },
-            { B },
-            { B } }),
-    Surface({   // Waiting for
-            { B },
-            { B },
-            { B },
-            { B },
-            { B },
-            { B },
-            { B },
-            { B },
-            { B } }),
-    Surface({   // server
-            { B },
-            { B },
-            { B },
-            { B },
-            { B },
-            { B },
-            { B },
-            { B },
-            { B } }),
-    Surface({   // client
-            { B },
-            { B },
-            { B },
-            { B },
-            { B },
-            { B },
-            { B },
-            { B },
-            { B } }),
-    Surface({   // Player _ wins
-            { B },
-            { B },
-            { B },
-            { B },
-            { B },
-            { B },
-            { B },
-            { B },
-            { B } }),
-    Surface({   // one
-            { B },
-            { B },
-            { B },
-            { B },
-            { B },
-            { B },
-            { B },
-            { B },
-            { B } }),
-
-    Surface({   // two
-            { B },
-            { B },
-            { B },
-            { B },
-            { B },
-            { B },
-            { B },
-            { B },
-            { B } })
-};
