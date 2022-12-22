@@ -3,8 +3,8 @@ Create your project directory tree as such:
        
     Pong/
     ├── bin/
-    ├── config.h
     ├── include/
+    |   └──config.h
     ├── interface/
     ├── makefile
     ├── obj/
@@ -14,4 +14,15 @@ Create your project directory tree as such:
 For now, fill makefile with variables and flags:
 ROOT, BIN, TEST, INC, ONJ, SRC, CC, CFLAGS, LDFLAGS
 
-config.h will be used to provide configurability of the game.
+# config.h
+
+**config.h** will be used to provide configurability of the engine
+without having to edit the main source.
+
+Add the following define macros to your *config.h* file:
+* **GAME_CLASS**
+* **LOCAL_KEYBOARD_CLASS**
+* **GRAPHIC_CLASS**
+* **CONFIG_WIDTH**
+* **CONFIG_HEIGHT**
+* **CONFIG_NAME**
