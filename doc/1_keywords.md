@@ -21,12 +21,22 @@
 13. Try, catch
 14. /dev/input
 15. Bitarray
+16. State machine
+17. TCP
+18. OpenGL / SDL
 
 # Functions
 1. tcgetattr
 2. tcsetattr
 3. ioctl
+4. throw
+5. glob
+6. socket
+7. fcntl
+8. bind
+9. listen
+10. connect
 
+## Next chapter
 
-
-
+[2. Setup](2_setup.md)

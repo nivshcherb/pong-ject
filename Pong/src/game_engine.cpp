@@ -12,8 +12,7 @@
 
 GameEngine::GameEngine() :
     game(nullptr),
-    window(nullptr),
-    is_running(false)
+    window(nullptr)
 {
     // Do nothing
 }

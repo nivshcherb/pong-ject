@@ -2,10 +2,12 @@
 
 <img src="https://media.tenor.com/MmP6YbJNV2sAAAAC/wow-typing.gif" alt="keyboard"/>
 
+Next, we will handle the *HandleInput()* step of the gameloop. While some game engines are more event driven, we will read the state of the keyboard every loop and using this information determine which keys are pressed.
+
 ## KbdInput
 
-Create **KbdInput** Interface.
-*KbdInput* describes the functionality required to read the state of the keyboard and test keys. Again, Not linux specific.
+Again, the game and engine do not really care how we know what keys are presses, they only cares about the state of the keys.
+Create *KbdInput* interface that will provide the game with the ability to test the state of any keyboard keys.
 
 Method      |   Description
 :--         |   :--
@@ -15,36 +17,32 @@ IsUp        |   Check if a given key is currently up.
 IsPressed   |   Check if a given key was just pressed.
 IsReleased  |   Check if a given key was just released.
 
-Make sure *KbdInput* is as portable as possible.
-
 ## LinuxKbdDevice
-Create **LInuxKbdDevice** that implements *KbdInput*.
-We will read the state of the keyboard by openning "-kbd" file found in **/dev/input/** and reading a bitarray using **ioctl**. Unfortunatly, this will require us to run as root.
 
-The name of the "-kbd" file depends on your connected device. Moreover, you might find more than one "-kbd" file. Filtering out the currect file isn't imposible, but for now we will just open and read all of them.
+For this game, we are going to try and read from the kbd files found in */dev/input/* directory using *ioctl*. Unfortunatly, this will require root privileges.
 
-Use **glop** to recieve an array of all "-kbd" files and save all the ones you are able to open. It is a good idea to add an exception if no keyboard is found.
+Inside */dev/input/* you might find more than one *-kbd* file. If you know which one to open, more power to you. For now, we'll just read all of them. You can use *glob*
+to receive an array of files ending with *-kbd* and open each one of them.
 
 Method      |   Description
 :--         |   :--
 Ctor        |   Open all "-kbd" files and store them.
 Dtor        |   Close all the stored files.
 Update      |   Read the keyboard state from the stored files.
-IsDown      |   Check if the bit of a given key is unset.
-IsUp        |   Check if the bit of a given key is set.
-IsPressed   |   Check if the bit of a given key changed from unset to set.
-IsReleased  |   Check if the bit of a given key changed from set to unset.
 
-Use **linux/input.h** to get the keys' bit value.
+The bit value for each key is found in *linux/input.h*.
+Handle cases where you are unable to access any *-kbd* file.
 
 ## Testing
 
-Test *LinuxKbdDevice* and make sure it works.
-In a loop, check if a key is down or up and count the number of presses and releases.
-Do not forget to run as root.
+In a loop, check if a given key is pressed and count the number of presses and releases. Do not forget to run as root.
 
 ## Relevant Files
 
 - [interface/kbd_input.hpp](../Pong/interface/kbd_input.hpp)
 - [include/linux_kbd_device.hpp](../Pong/include/linux_kbd_device.hpp)
 - [src/linux_kbd_device.hpp](../Pong/src/linux_kbd_device.cpp)
+
+## Next chapter
+
+[5. Game Engine](5_game_engine.md)

@@ -2,64 +2,80 @@
 
 <img src="https://i.kym-cdn.com/photos/images/original/001/018/866/e44.png" alt="graphic" width="400"/>
 
+One of the steps inside the gameloop is *Draw()* which will tell some class how to output.
+Our engine will use a class, *Surface*, to store and edit a 2D array of pixels.
+
 ## Surface
 
-Create 2 classes, **Pixel** and **Surface**.
+In order to save information about pixels, we will create 2 classes:
+**Pixel** and **Surface**.
 
-Class   |   Fields
-:---    |   :---
-Pixel   |   Red, green and blue
-Surface |   2D matrix of *Pixel*s
+*Pixel* is optional and used to store the values for red, green and blue
+instead of handling *Surface* as a 3D array. Each value have a range of 0 to 255 (char).
 
-These classed do not have much required functionality, and are mostly used to encapsulate the information. Make sure you have get/set access to the fields.
-You can add methods as you see fit.
+*Surface* is the main object used for drawing.
+Use 2D vector to store the pixels and provide access to each pixel individually.
+
+You can add constructors and methods to these classes as you see fit.
+
+As a bonus, add an option to load an image as *Surface* from a given path.
+I used the format ".raw" as it is the simplest one and does not require any libraries.
 
 ## SurfaceWindow
 
-Create **SurfaceWindow** interface.
-*SurfaceWindow* describes the functionality required from any class that want to draw our game (not necessarily using Linux termianl).
+Since we do not want the engine to depend on the operation system, we would like to write
+some interface and specify what methods are available to the game engine regardless of implementation.
+
+Create *SurfaceWindow* interface with the following public methods:
+
 Method  |   Description
 :---    |   :---
-Apply   |   Apply a given *Surface* at location (x, y).
-Clean   |   Remove all applied *Surface*s.
-Draw    |   Output the current window state.
+Apply   |   Given a *Surface* and a location (x, y), apply the surface to the window
+Clean   |   Remove all *Surface*s added with *Apply()*.
+Draw    |   Output the current window.
 
-Make sure *SurfaceWindow* is as portable as possible.
+Make sure you do not depend on any specification other than the use of *Surface*.
 
 ## TermSurface
 
-Create **TermSurface** class that implements *SurfaceWindow*.
-For our implementation, we will use **Termios** and **ANSI escape codes**, and our *Surface* class.
+We will implement *SurfaceWindow* using ubuntu's default terminal. In order to
+do so, we will use *Termios* and *ANSI escape codes* to configurate the terminal
+and print out the stored pixels as characters with background / foreground color.
 
 > The termios functions describe a general terminal interface that is provided to control asynchronous communications ports. [*](https://en.wikipedia.org/wiki/ANSI_escape_code)
 
 > ANSI escape sequences are a standard for in-band signaling to control cursor location, color, font styling, and other options on video text terminals and terminal emulators. [*](https://man7.org/linux/man-pages/man3/termios.3.html)
 
+Create *TermSurface* that implements *SurfaceWindow* for ubuntu.
+
 Method  |   Description
 :---    |   :---
-Ctor    |   Disable terminal echo, input buffering and cursur, resize window, change the title and clear the terminal.
-Dtor    |   Revert all changes done in Ctor().
-Apply   |   Replace *Pixel*s held by *TermSurface* with *Pixel*s from the given *Surface*. The user may apply a *Surface* completly/partly outside the boundaries, so handle accordingly.
-Clean   |   Set *Pixel*s held by *TermSurface* to some default value.
-Draw    |   Print each *Pixel* with it's color using ANSI escape code. Setting the background color and printing a space character should do the trick.
-
-## Testing
-
-Test *TermSurface* and make sure everything is working correctly. Finding bugs at this point will save you time when the project becomes more complicated.
+Ctor    |   Use both *Termios* and *ANSI escape codes* to disable echo, input buffering and cursor, change the title and clear the terminal completely.
+Dtor    |   Revert all changes done in *Ctor()*.
+Apply   |   Given a *Surface* and a location (x, y), replace the stored pixels with the pixels from the *Surface*. Consider the end cases that might happen.
+Clean   |   Set the stored pixels to some default value.
+Draw    |   Print each stored pixel using *ANSI escape code*.
+Simply changing the background color and priting space character should do the trick.
 
 
-In a loop, draw a *Surface* on the entire sceen. Choose a different colored *Surface* each loop. Compute the average time Draw() takes. Try to zoom out in the terminal to fit a many pixels as possible.
+## Performance
 
-Which of the 3 functions in the loop has the worst preformance? Why?
+Try running some tests on *TermSurface*. Check as many end cases you can think of.
+Finding bugs at this point will substantially reduce complications later on.
 
-## Optimization
+After you feel everything is working correctly, check the performance of you *Draw()* function
+by drawing 2 *Surface*s of different color on the entire screen one after the other
+and calculating the average time each *Draw()* takes to complete.
 
-Try optimizing your *Draw()* function by
+Find ways to improve *Draw()*. 2 rather simple solutions are:
 
-1. Including 2 *Pixel*s in each character. ▀ is you friend.
-2. Only printing *Pixel*s which have been changed since the last *Draw()* call.
+1. Using both background and foreground colors to print 2 pixels at a time. Replace the space character with ▀.
+2. Only print pixels that were changed since the last *Draw()* call.
 
-This type of “graphics” isn’t optimal, but it is enough for our simple game.
+Compare the performance of *Draw()* before and after your improvements.
+
+
+Consider reading about *OpenGL* and *SDL* for a better interface for outputing graphics.
 
 ## Relevant Files
 
@@ -69,3 +85,7 @@ This type of “graphics” isn’t optimal, but it is enough for our simple gam
 - [src/surface.cpp](../Pong/src/surface.cpp)
 - [src/term_surface.cpp](../Pong/src/term_surface.cpp)
 - [test/surface_test.cpp](../Pong/test/surface_test.cpp)
+
+## Next chapter
+
+[4. Keyboard](4_keyboard.md)

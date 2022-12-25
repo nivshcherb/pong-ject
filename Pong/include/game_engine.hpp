@@ -26,7 +26,6 @@ private:
     // Members
     GameLogic *game;
     SurfaceWindow *window;
-    bool is_running;
 };
 
 /* -------------------------------------------------------------------------- */

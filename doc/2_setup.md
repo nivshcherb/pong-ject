@@ -26,3 +26,7 @@ Add the following define macros to your *config.h* file:
 * **CONFIG_WIDTH**
 * **CONFIG_HEIGHT**
 * **CONFIG_NAME**
+
+## Next chapter
+
+[3. Graphics](3_graphics.md)
