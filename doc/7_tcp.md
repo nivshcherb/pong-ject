@@ -32,6 +32,9 @@ Finaly, derive 2 new classes from *TCP*, *TcpServer* and *TcpClient* and impleme
 Add states to your Pong to allow choosing local / online play and waiting for connections.
 For online play, the server will handle the logic and send it to the client. In return, the client will send it's player location or the current keys pressed.
 
+## Relevant Files
 
+- [interface/endpoint.hpp](../Pong/interface/endpoint.hpp)
+- [include/tcp.hpp](../Pong/include/tcp.hpp)
 
 
